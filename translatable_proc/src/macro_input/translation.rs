@@ -1,4 +1,3 @@
-use core::panic;
 use std::collections::HashMap;
 
 use proc_macro2::TokenStream as TokenStream2;
@@ -11,12 +10,10 @@ use syn::{
     ExprLit,
     Ident,
     Lit,
-    LitStr,
     Path,
     PathArguments,
     Result as SynResult,
     Token,
-    parse2,
 };
 use thiserror::Error;
 use translatable_shared::Language;
@@ -67,7 +64,7 @@ pub struct TranslationMacroArgs {
     ///
     /// If a call such as `a` is found, it will be implicitly
     /// converted to `a = a` thus stored like so in the hash map.
-    replacements: HashMap<String, TokenStream2>,
+    replacements: HashMap<Ident, TokenStream2>,
 }
 
 impl TranslationMacroArgsError {
@@ -127,7 +124,7 @@ impl Parse for TranslationMacroArgs {
                     Err(_) => key.clone().into_token_stream(),
                 };
 
-                replacements.insert(key.to_string(), value);
+                replacements.insert(key, value);
             }
         }
 
@@ -154,7 +151,7 @@ impl TranslationMacroArgs {
 
     #[inline]
     #[allow(unused)]
-    pub fn replacements(&self) -> &HashMap<String, TokenStream2> {
+    pub fn replacements(&self) -> &HashMap<Ident, TokenStream2> {
         &self.replacements
     }
 }

@@ -37,7 +37,24 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
                     )
                 });
 
-            return handle_macro_result!(translation).into_token_stream();
+            let translation = handle_macro_result!(translation).into_token_stream();
+            let replacements = input.replacements();
+
+            return if replacements.is_empty() {
+                translation
+            } else {
+                let replacements = replacements
+                    .iter()
+                    .map(|(key, value)| quote! {
+                        #[doc(hidden)]
+                        let #key = #value;
+                    });
+
+                quote! {{
+                    #(#replacements)*
+                    format!(#translation)
+                }}
+            };
         }
     }
 

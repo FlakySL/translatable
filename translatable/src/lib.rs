@@ -12,7 +12,6 @@ pub use translatable_proc::translation;
 /// that should not but could be used by the users
 /// of the library
 pub mod shared {
-    pub use strum::IntoEnumIterator;
     /// Re-export utils used for both runtime and compile-time
     pub use translatable_shared::{
         Language,
