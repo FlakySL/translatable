@@ -43,12 +43,12 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
             return if replacements.is_empty() {
                 translation
             } else {
-                let replacements = replacements
-                    .iter()
-                    .map(|(key, value)| quote! {
+                let replacements = replacements.iter().map(|(key, value)| {
+                    quote! {
                         #[doc(hidden)]
                         let #key = #value;
-                    });
+                    }
+                });
 
                 quote! {{
                     #(#replacements)*

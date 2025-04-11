@@ -16,7 +16,6 @@ use crate::macro_input::translation::TranslationMacroArgs;
 mod data;
 mod macro_generation;
 mod macro_input;
-mod utils;
 
 /// Procedural macro for compile-time translation validation
 ///

@@ -6,7 +6,7 @@ use strum::ParseError;
 use thiserror::Error;
 use toml::{Table, Value};
 
-use crate::Language;
+use crate::language::Language;
 
 /// Errors occurring during TOML-to-translation structure transformation
 #[derive(Error, Debug)]

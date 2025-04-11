@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, TokenStreamExt, quote};
 
-use super::node::TranslationObject;
-use crate::TranslationNode;
+use super::node::{TranslationNode, TranslationObject};
 
 /// Wraps a collection of translation nodes, these translation nodes
 /// are usually directly loaded files, and the keys to access them
