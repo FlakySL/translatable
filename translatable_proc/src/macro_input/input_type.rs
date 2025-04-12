@@ -14,7 +14,6 @@ impl<T: Into<TokenStream2>> InputType<T> {
     /// enum value whether it's conceptually
     /// dynamic or static into its dynamic
     /// represented as a `TokenStream`
-    #[cold]
     #[inline]
     #[allow(unused)]
     fn dynamic(self) -> TokenStream2 {

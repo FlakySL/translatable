@@ -4,6 +4,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, TokenStreamExt, quote};
 
 use super::node::{TranslationNode, TranslationObject};
+use crate::macros::collections::map_transform_to_tokens;
 
 /// Wraps a collection of translation nodes, these translation nodes
 /// are usually directly loaded files, and the keys to access them
@@ -60,21 +61,9 @@ impl FromIterator<(String, TranslationNode)> for TranslationNodeCollection {
 
 impl ToTokens for TranslationNodeCollection {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        let node_collection = self.0.iter().map(|(key, value)| {
-            let key = key.to_token_stream();
-            let value = value.to_token_stream();
-
-            quote! {
-                (#key.to_string(), #value)
-            }
-        });
-
-        tokens.append_all(quote! {
-            translatable::shared::TranslationNodeCollection::new(
-                vec![#(#node_collection),*]
-                    .into_iter()
-                    .collect()
-            )
-        });
+        tokens.append_all(map_transform_to_tokens(
+            &self.0,
+            |key, value| quote! { (#key.to_string(), #value) },
+        ));
     }
 }

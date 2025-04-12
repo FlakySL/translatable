@@ -7,6 +7,7 @@ use thiserror::Error;
 use toml::{Table, Value};
 
 use crate::language::Language;
+use crate::macros::collections::map_transform_to_tokens;
 
 /// Errors occurring during TOML-to-translation structure transformation
 #[derive(Error, Debug)]
@@ -71,39 +72,17 @@ impl ToTokens for TranslationNode {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         match self {
             TranslationNode::Nesting(nesting) => {
-                let mapped_nesting = nesting
-                    .into_iter()
-                    .map(|(key, value)| {
-                        let value = value.to_token_stream();
-                        quote! { (#key.to_string(), #value) }
-                    })
-                    .collect::<Vec<_>>();
-
-                tokens.append_all(quote! {{
-                    translatable::shared::TranslationNode::Nesting(
-                        vec![#(#mapped_nesting),*]
-                            .into_iter()
-                            .collect::<std::collections::HashMap<_, _>>()
-                    )
-                }});
+                tokens.append_all(map_transform_to_tokens(
+                    nesting,
+                    |key, value| quote! { (#key.to_string(), #value) },
+                ));
             },
 
             TranslationNode::Translation(translation) => {
-                let mapped_translation = translation
-                    .into_iter()
-                    .map(|(key, value)| {
-                        let key = key.into_token_stream();
-                        quote! { (#key, #value.to_string()) }
-                    })
-                    .collect::<Vec<_>>();
-
-                tokens.append_all(quote! {{
-                    translatable::shared::TranslationNode::Translation(
-                        vec![#(#mapped_translation),*]
-                            .into_iter()
-                            .collect::<std::collections::HashMap<_, _>>()
-                    )
-                }});
+                tokens.append_all(map_transform_to_tokens(
+                    translation,
+                    |key, value| quote! { (#key, #value.to_string()) },
+                ));
             },
         }
     }
