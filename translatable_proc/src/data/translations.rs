@@ -5,7 +5,8 @@ use std::sync::OnceLock;
 use thiserror::Error;
 use toml::Table;
 use toml::de::Error as TomlError;
-use translatable_shared::{TranslationNode, TranslationNodeCollection, TranslationNodeError};
+use translatable_shared::translations::collection::TranslationNodeCollection;
+use translatable_shared::translations::node::{TranslationNode, TranslationNodeError};
 
 use super::config::{ConfigError, SeekMode, TranslationOverlap, load_config};
 

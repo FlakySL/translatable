@@ -437,6 +437,6 @@ impl ToTokens for Language {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let ident = Ident::new(&format!("{self:?}"), Span::call_site());
 
-        tokens.append_all(quote! { translatable::shared::Language::#ident })
+        tokens.append_all(quote! { translatable::shared::language::Language::#ident })
     }
 }

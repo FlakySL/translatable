@@ -61,9 +61,15 @@ impl FromIterator<(String, TranslationNode)> for TranslationNodeCollection {
 
 impl ToTokens for TranslationNodeCollection {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        tokens.append_all(map_transform_to_tokens(
+        let map = map_transform_to_tokens(
             &self.0,
             |key, value| quote! { (#key.to_string(), #value) },
-        ));
+        );
+
+        tokens.append_all(quote! {
+            translatable::shared::translations::collection::TranslationNodeCollection::new(
+                #map
+            )
+        });
     }
 }

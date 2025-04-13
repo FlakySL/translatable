@@ -72,17 +72,29 @@ impl ToTokens for TranslationNode {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         match self {
             TranslationNode::Nesting(nesting) => {
-                tokens.append_all(map_transform_to_tokens(
+                let map = map_transform_to_tokens(
                     nesting,
                     |key, value| quote! { (#key.to_string(), #value) },
-                ));
+                );
+
+                tokens.append_all(quote! {
+                    translatable::shared::translations::node::TranslationNode::Nesting(
+                        #map
+                    )
+                });
             },
 
             TranslationNode::Translation(translation) => {
-                tokens.append_all(map_transform_to_tokens(
+                let map = map_transform_to_tokens(
                     translation,
                     |key, value| quote! { (#key, #value.to_string()) },
-                ));
+                );
+
+                tokens.append_all(quote! {
+                    translatable::shared::translations::node::TranslationNode::Translation(
+                        #map
+                    )
+                });
             },
         }
     }

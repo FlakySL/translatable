@@ -1,23 +1,18 @@
 mod error;
 
-// Export the private error module
+// A re-export to the runtime error
+// enum for user availabilty and
+// debugging.
 pub use error::RuntimeError as Error;
-/// Re-export the language in the crate top level as
-/// it's a macro parameter
-pub use shared::Language;
-/// Re-export the procedural macro for crate users
+/// A re-export from the Language enum
+/// for users to dynamically parse
+/// when using dynamic arguments.
+pub use shared::language::Language;
+/// A re-export to the translation macro
+/// exported in the proc_macro module.
 pub use translatable_proc::translation;
-
-/// This module re-exports structures used by macros
-/// that should not but could be used by the users
-/// of the library
-pub mod shared {
-    /// Re-export utils used for both runtime and compile-time
-    pub use translatable_shared::{
-        Language,
-        LanguageIter,
-        TranslationNode,
-        TranslationNodeCollection,
-        TranslationNodeError,
-    };
-}
+/// A re-export of all the shared modules
+/// as declared in the shared crate used
+/// for macro generation.
+#[doc(hidden)]
+pub use translatable_shared as shared;

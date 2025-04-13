@@ -1,13 +1,13 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
 use thiserror::Error;
-use translatable_shared::Language;
+use translatable_shared::handle_macro_result;
+use translatable_shared::language::Language;
+use translatable_shared::macros::collections::map_to_tokens;
 
 use crate::data::translations::load_translations;
 use crate::macro_input::input_type::InputType;
 use crate::macro_input::translation::TranslationMacroArgs;
-use crate::utils::collections::map_to_tokens;
-use crate::utils::errors::handle_macro_result;
 
 #[derive(Error, Debug)]
 enum MacroCompileError {
@@ -61,7 +61,7 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
     let language = match input.language() {
         InputType::Static(language) => language.clone().to_token_stream(),
         InputType::Dynamic(language) => quote! {
-            translatable::shared::Language::from(#language)
+            translatable::shared::language::Language::from(#language)
         },
     };
 

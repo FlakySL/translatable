@@ -25,7 +25,7 @@ impl<T: Display> IntoCompileError for T {}
 #[macro_export]
 macro_rules! handle_macro_result {
     ($val:expr) => {{
-        use $crate::utils::errors::IntoCompileError;
+        use $crate::macros::errors::IntoCompileError;
 
         match $val {
             std::result::Result::Ok(value) => value,
