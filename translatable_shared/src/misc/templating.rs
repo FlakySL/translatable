@@ -30,7 +30,7 @@ pub struct FormatString {
 
 impl FormatString {
     pub fn replace_with(mut self, values: HashMap<String, String>) -> String {
-        let mut replacements: Vec<(String, std::ops::Range<usize>)> =
+        let mut replacements: Vec<(String, Range<usize>)> =
             self.spans.into_iter().collect();
         replacements.sort_by_key(|(_key, range)| range.start);
         let mut offset = 0isize;
