@@ -54,39 +54,43 @@ impl FromStr for FormatString {
         let original = s.to_string();
         let mut spans = HashMap::new();
 
-        let mut last_bracket_idx = 0usize;
+        let char_to_byte = s.char_indices().map(|(i, _)| i).collect::<Vec<usize>>();
+
+        let mut last_bracket_idx = None;
         let mut current_tmpl_key = String::new();
-        for (i, c) in original.chars().enumerate() {
+        for (char_idx, c) in original.chars().enumerate() {
             match (c, last_bracket_idx) {
-                // if last template index is anything but the last character
-                // set it as last index.
-                ('{', lbi) if lbi != i.saturating_sub(1) => last_bracket_idx = i,
                 // if last template index is the last character
                 // ignore current as is escaped.
-                ('{', lbi) if lbi == i.saturating_sub(1) => last_bracket_idx = 0,
+                ('{', Some(prev)) if prev == char_idx.saturating_sub(1) => last_bracket_idx = None,
+                // if last template index is anything but the last character
+                // set it as last index.
+                ('{', _) => last_bracket_idx = Some(char_idx),
 
                 // if last template index is not 0 and we find
                 // a closing bracket complete a range.
-                ('}', lbi) if lbi != 0 => {
+                ('}', Some(open_idx)) => {
+                    let key = current_tmpl_key.clone();
+
                     spans.insert(
-                        parse_str::<Ident>(&current_tmpl_key)
-                            .map_err(|_| TemplateError::InvalidIdent(current_tmpl_key))?
+                        parse_str::<Ident>(&key)
+                            .map_err(|_| TemplateError::InvalidIdent(key))?
                             .to_string(),
-                        (last_bracket_idx + 1)..(i + 2), // inclusive
+                        char_to_byte[open_idx]..char_to_byte[char_idx + 1], // inclusive
                     );
 
-                    last_bracket_idx = 0;
-                    current_tmpl_key = String::new();
+                    last_bracket_idx = None;
+                    current_tmpl_key.clear();
                 },
 
-                (c, lbi) if lbi != 0 => current_tmpl_key += &{ c.to_string() },
+                (c, Some(_)) => current_tmpl_key.push(c),
 
                 _ => {},
             }
         }
 
-        if last_bracket_idx != 0 {
-            Err(TemplateError::Unclosed(last_bracket_idx))
+        if let Some(lbi) = last_bracket_idx {
+            Err(TemplateError::Unclosed(lbi))
         } else {
             Ok(FormatString { original, spans })
         }
