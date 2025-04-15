@@ -4,5 +4,5 @@ en = "Welcome to our app!"
 es = "¡Bienvenido a nuestra aplicación!"
 
 [common.greeting]
-en = "Hello {name}!"
-es = "¡Hola {name}!"
+en = "Hello {name} {surname}!"
+es = "¡Hola {name} {surname}!"

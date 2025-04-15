@@ -1,5 +1,6 @@
 use thiserror::Error;
 use translatable_shared::language::Language;
+use translatable_shared::macros::templating::TemplateError;
 use translatable_shared::translations::node::TranslationNodeError;
 
 /// This enum is used to debug runtime errors generated
@@ -15,6 +16,9 @@ pub enum RuntimeError {
 
     #[error("The language '{0:?}' ('{0:#}') is not available for the path '{1}'")]
     LanguageNotAvailable(Language, String),
+
+    #[error("An error has occurred while parsing templates: {0:#}")]
+    TemplateMissmatch(#[from] TemplateError),
 }
 
 impl RuntimeError {

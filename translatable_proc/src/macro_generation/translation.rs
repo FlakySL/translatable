@@ -21,6 +21,9 @@ enum MacroCompileError {
 pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
     let translations = handle_macro_result!(load_translations());
 
+    let template_replacements =
+        input.replacements().iter().map(|(key, value)| quote! { #key = #value });
+
     if let InputType::Static(language) = input.language() {
         if let InputType::Static(path) = input.path() {
             let static_path_display = path.join("::");
@@ -38,22 +41,12 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
                 });
 
             let translation = handle_macro_result!(translation).into_token_stream();
-            let replacements = input.replacements();
 
-            return if replacements.is_empty() {
-                translation
-            } else {
-                let replacements = replacements.iter().map(|(key, value)| {
-                    quote! {
-                        #[doc(hidden)]
-                        let #key = #value;
-                    }
-                });
-
-                quote! {{
-                    #(#replacements)*
-                    format!(#translation)
-                }}
+            return quote! {
+                translatable::shared::replace_templates!(
+                    #translation,
+                    #(#template_replacements),*
+                )
             };
         }
     }
@@ -103,10 +96,15 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
                 #[doc(hidden)]
                 let language = #language;
 
-                #translation_object
-                    .get(&language)
-                    .ok_or_else(|| translatable::Error::LanguageNotAvailable(language, path.join("::")))?
-                    .to_string()
+                translatable::shared::replace_templates!(
+                    {
+                        #translation_object
+                            .get(&language)
+                            .ok_or_else(|| translatable::Error::LanguageNotAvailable(language, path.join("::")))?
+                            .to_string()
+                    },
+                    #(#template_replacements),*
+                )?
             })
         })()
     }

@@ -8,6 +8,7 @@ use toml::{Table, Value};
 
 use crate::language::Language;
 use crate::macros::collections::map_transform_to_tokens;
+use crate::macros::templating::{TemplateError, validate_format_string};
 
 /// Errors occurring during TOML-to-translation structure transformation
 #[derive(Error, Debug)]
@@ -17,8 +18,8 @@ pub enum TranslationNodeError {
     InvalidNesting,
 
     /// Template syntax error with unbalanced braces
-    #[error("Templates in translations should match '{{' and '}}'")]
-    UnclosedTemplate,
+    #[error("Tempalte validation failed: {0:#}")]
+    UnclosedTemplate(#[from] TemplateError),
 
     /// Invalid value type encountered in translation structure
     #[error("Only strings and objects are allowed for nested objects.")]
@@ -100,21 +101,6 @@ impl ToTokens for TranslationNode {
     }
 }
 
-/// Validates template brace balancing in translation strings
-fn templates_valid(translation: &str) -> bool {
-    let mut nestings = 0;
-
-    for character in translation.chars() {
-        match character {
-            '{' => nestings += 1,
-            '}' => nestings -= 1,
-            _ => {},
-        }
-    }
-
-    nestings == 0
-}
-
 /// This implementation converts a `toml::Table` into a manageable
 /// NestingType.
 impl TryFrom<Table> for TranslationNode {
@@ -132,9 +118,7 @@ impl TryFrom<Table> for TranslationNode {
 
                     match result {
                         Self::Translation(translation) => {
-                            if !templates_valid(&translation_value) {
-                                return Err(TranslationNodeError::UnclosedTemplate);
-                            }
+                            validate_format_string(&translation_value)?;
                             translation.insert(key.parse()?, translation_value);
                         },
 
