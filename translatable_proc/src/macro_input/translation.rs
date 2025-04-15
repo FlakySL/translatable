@@ -16,7 +16,7 @@ use syn::{
     Token,
 };
 use thiserror::Error;
-use translatable_shared::language::Language;
+use translatable_shared::misc::language::Language;
 
 use super::input_type::InputType;
 

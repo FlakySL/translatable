@@ -1,6 +1,6 @@
 use thiserror::Error;
-use translatable_shared::language::Language;
-use translatable_shared::macros::templating::TemplateError;
+use translatable_shared::misc::language::Language;
+use translatable_shared::misc::templating::TemplateError;
 use translatable_shared::translations::node::TranslationNodeError;
 
 /// This enum is used to debug runtime errors generated

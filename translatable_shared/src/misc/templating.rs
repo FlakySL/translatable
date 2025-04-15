@@ -96,7 +96,7 @@ impl FromStr for FormatString {
 #[macro_export]
 macro_rules! replace_templates {
     ($orig:expr, $($key:ident = $value:expr),* $(,)?) => {{
-        $orig.parse::<$crate::macros::templating::FormatString>()
+        $orig.parse::<$crate::misc::templating::FormatString>()
             .map(|parsed| parsed
                 .replace_with(
                     vec![$((stringify!($key).to_string(), $value.to_string())),*]

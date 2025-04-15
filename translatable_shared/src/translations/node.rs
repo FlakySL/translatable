@@ -6,9 +6,9 @@ use strum::ParseError;
 use thiserror::Error;
 use toml::{Table, Value};
 
-use crate::language::Language;
 use crate::macros::collections::map_transform_to_tokens;
-use crate::macros::templating::{TemplateError, validate_format_string};
+use crate::misc::language::Language;
+use crate::misc::templating::{TemplateError, validate_format_string};
 
 /// Errors occurring during TOML-to-translation structure transformation
 #[derive(Error, Debug)]

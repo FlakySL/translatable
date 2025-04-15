@@ -7,7 +7,7 @@ pub use error::RuntimeError as Error;
 /// A re-export from the Language enum
 /// for users to dynamically parse
 /// when using dynamic arguments.
-pub use shared::language::Language;
+pub use shared::misc::language::Language;
 /// A re-export to the translation macro
 /// exported in the proc_macro module.
 pub use translatable_proc::translation;
