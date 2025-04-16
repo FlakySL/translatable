@@ -27,7 +27,12 @@ pub enum RuntimeError {
     /// template validation...
     ///
     /// `Display` directly forwards the inner
-    /// error `Display` value.
+    /// error `Display` value. The enum implements
+    /// `From<TranslationNodeError>` to wrap the
+    /// original error.
+    ///
+    /// **Parameters**
+    /// * `0` - The TranslationNodeError derivation.
     #[error("{0:#}")]
     TranslationNode(#[from] TranslationNodeError),
 
@@ -39,6 +44,10 @@ pub enum RuntimeError {
     /// This is not related to runtime language
     /// validity, check `Error::LanguageNotAvailable`
     /// for that purpose.
+    ///
+    /// **Parameters**
+    /// * `0` - The path that could not be found
+    /// appended with it's separator.
     #[error("The path '{0}' could not be found")]
     PathNotFound(String),
 
@@ -51,6 +60,11 @@ pub enum RuntimeError {
     /// the language parameter must be a `Language`,
     /// if it's a &str the validation is made in compile
     /// time. In that case we don't reach runtime.
+    ///
+    /// **Parameters**
+    /// * `0` - The language that is not available.
+    /// * `1` - The path for which the language is not available
+    /// appended with it's separator.
     #[error("The language '{0:?}' ('{0:#}') is not available for the path '{1}'")]
     LanguageNotAvailable(Language, String),
 }
