@@ -1,7 +1,8 @@
-//! Configuration loading and handling for translatable content
+//! User configuration module.
 //!
-//! This module provides functionality to load and manage configuration
-//! settings for localization/translation workflows from a TOML file.
+//! This module defines the structures and
+//! helper functions for parsing and loading
+//! user configuration files.
 
 use std::env::var;
 use std::fs::read_to_string;
@@ -13,28 +14,78 @@ use thiserror::Error;
 use toml::Table;
 use toml::de::Error as TomlError;
 
-/// Errors that can occur during configuration loading
+/// Configuration error enum.
+///
+/// Used for compiletime configuration
+/// errors, such as errors while opening
+/// files or parsing a file format.
+///
+/// The errors from this enum are directly
+/// shown in rust-analyzer.
 #[derive(Error, Debug)]
 pub enum ConfigError {
-    /// IO error occurred while reading configuration file
+    /// IO error derivations.
+    ///
+    /// Usually errors while interacting
+    /// with the file system.
+    ///
+    /// `Display` forwards the inner error `Display`
+    /// value with some prefix text. The enum
+    /// implements `From<std::io::Error>` to wrap
+    /// the error.
+    ///
+    /// **Parameters**
+    /// * `0` - The IO error derivation.
     #[error("IO error reading configuration: {0:#}")]
     Io(#[from] IoError),
 
-    /// TOML parsing error with location information
+    /// TOML deserialization error derivations.
+    ///
+    /// The configuration file contents could
+    /// not be parsed as TOML.
+    ///
+    /// The error is formatted displaying
+    /// the file name hardcoded as `./translatable.toml`
+    /// and appended with the line and character. The
+    /// enum implements `From<toml::de::Error>` to wrap
+    /// the error.
+    ///
+    /// **Parameters**
+    /// * `0` - The TOML deserialization error derivation.
     #[error(
         "TOML parse error '{}'{}",
         .0.message(),
-        .0.span().map(|l| format!(" in ./translatable.toml:{}:{}", l.start, l.end))
+        .0.span()
+            .map(|l| format!(" in ./translatable.toml:{}:{}", l.start, l.end))
             .unwrap_or_else(|| "".into())
     )]
     ParseToml(#[from] TomlError),
 
-    /// Invalid environment variable value for configuration options
+    /// Parse value error.
+    ///
+    /// There was an error while parsing
+    /// a specific configuration entry,
+    /// since these are mapped to enums in
+    /// most cases.
+    ///
+    /// The error has a custom format
+    /// displaying the key and value
+    /// that should have been parsed.
+    ///
+    /// **Parameters**
+    /// * `0` - The configuration key for which the entry
+    /// could not be parsed.
+    /// * `1` - The configuration value that couldn't be
+    /// parsed.
     #[error("Couldn't parse configuration entry '{1}' for '{0}'")]
     InvalidValue(String, String),
 }
 
-/// File search order strategy
+/// Defines the search strategy for configuration files.
+///
+/// Represents the possible values of the parsed `seek_mode`
+/// field, which determine the order in which file paths
+/// are considered when opening configuration files.
 #[derive(Default, Clone, Copy, EnumString)]
 pub enum SeekMode {
     /// Alphabetical order (default)
@@ -45,7 +96,13 @@ pub enum SeekMode {
     Unalphabetical,
 }
 
-/// Translation conflict resolution strategy
+/// Strategy for resolving translation conflicts.
+///
+/// This enum defines how overlapping translations
+/// are handled when multiple sources provide values
+/// for the same key. The selected strategy determines
+/// whether newer translations replace existing ones or
+/// if the first encountered translation is preserved.
 #[derive(Default, Clone, Copy, EnumString)]
 pub enum TranslationOverlap {
     /// Last found translation overwrites previous ones (default)
@@ -56,9 +113,16 @@ pub enum TranslationOverlap {
     Ignore,
 }
 
-/// Main configuration structure for translation system
+/// Main configuration structure for the translation system.
+///
+/// Holds all the core parameters used to control how translation files are
+/// located, processed, and how conflicts are resolved between overlapping
+/// translations.
 pub struct MacroConfig {
-    /// Path to directory containing translation files
+    /// Path to the directory containing translation files.
+    ///
+    /// Specifies the base location where the system will search for
+    /// translation files.
     ///
     /// # Example
     /// ```toml
@@ -66,62 +130,76 @@ pub struct MacroConfig {
     /// ```
     path: String,
 
-    /// File processing order strategy
+    /// File processing order strategy.
     ///
-    /// Default: alphabetical file processing
+    /// Defines the order in which translation files are processed.
+    /// Default: alphabetical order.
     seek_mode: SeekMode,
 
-    /// Translation conflict resolution strategy
+    /// Translation conflict resolution strategy.
     ///
-    /// Determines behavior when multiple files contain the same translation
-    /// path
+    /// Determines the behavior when multiple files contain the same
+    /// translation key.
     overlap: TranslationOverlap,
 }
 
 impl MacroConfig {
-    /// Get reference to configured locales path
+    /// Get reference to the configured locales path.
+    ///
+    /// Returns the path to the directory where translation files are expected
+    /// to be located.
     pub fn path(&self) -> &str {
         &self.path
     }
 
-    /// Get current seek mode strategy
+    /// Get the current seek mode strategy.
+    ///
+    /// Returns the configured strategy used to determine the order in which
+    /// translation files are processed.
     pub fn seek_mode(&self) -> SeekMode {
         self.seek_mode
     }
 
-    /// Get current overlap resolution strategy
+    /// Get the current overlap resolution strategy.
+    ///
+    /// Returns the configured strategy for resolving translation conflicts
+    /// when multiple files define the same key.
     pub fn overlap(&self) -> TranslationOverlap {
         self.overlap
     }
 }
 
-/// Global configuration cache
+/// Global configuration cache.
+///
+/// Stores the initialized `MacroConfig` instance, which holds the configuration
+/// for the translation system. The `OnceLock` ensures the configuration is
+/// initialized only once and can be safely accessed across multiple threads
+/// after that initialization.
 static TRANSLATABLE_CONFIG: OnceLock<MacroConfig> = OnceLock::new();
 
-/// Load configuration from file or use defaults
+/// Load the global translation configuration.
 ///
-/// # Implementation Notes
-/// - Uses `OnceLock` for thread-safe singleton initialization
-/// - Missing config file is not considered an error
-/// - Config file must be named `translatable.toml` in root directory
-/// - Environment variables take precedence over TOML configuration
-/// - Supported environment variables:
-///   - `TRANSLATABLE_LOCALES_PATH`: Overrides translation directory path
-///   - `TRANSLATABLE_SEEK_MODE`: Sets file processing order ("alphabetical" or
-///     "unalphabetical")
-///   - `TRANSLATABLE_OVERLAP`: Sets conflict strategy ("overwrite" or "ignore")
+/// Initializes and returns a reference to the shared `MacroConfig` instance.
+/// Configuration values are loaded in the following priority order:
+/// environment variables override `translatable.toml`, and missing values fall
+/// back to hardcoded defaults.
 ///
-/// # Panics
-/// Will not panic but returns ConfigError for:
-/// - Malformed TOML syntax
-/// - Filesystem permission issues
-/// - Invalid environment variable values
+/// The configuration is cached after the first successful load, and reused on
+/// subsequent calls.
+///
+/// Disclaimers:
+/// - Must be called before any translation logic that depends on configuration.
+/// - If `translatable.toml` is malformed or contains invalid values, the function
+///   will return an error.
+///
+/// **Returns**
+/// `Ok(&MacroConfig)` — if the configuration is successfully loaded or already cached.
+/// `Err(ConfigError)` — if loading or parsing fails.
 pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
     if let Some(config) = TRANSLATABLE_CONFIG.get() {
         return Ok(config);
     }
 
-    // Load base configuration from TOML file
     let toml_content = read_to_string("./translatable.toml")
         .unwrap_or_default()
         .parse::<Table>()?;
@@ -160,7 +238,11 @@ pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
     }
 
     let config = MacroConfig {
-        path: config_value!("TRANSLATABLE_LOCALES_PATH", "path", "./translations"),
+        path: config_value!(
+            "TRANSLATABLE_LOCALES_PATH",
+            "path",
+            "./translations"
+        ),
         overlap: config_value!(parse(
             "TRANSLATABLE_OVERLAP",
             "overlap",
@@ -173,6 +255,5 @@ pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
         ))?,
     };
 
-    // Freeze configuration in global cache
     Ok(TRANSLATABLE_CONFIG.get_or_init(|| config))
 }
