@@ -63,7 +63,7 @@ impl RuntimeError {
     /// monads such as `ok_or_else` or any
     /// other `or_else` method.
     ///
-    /// # Returns
+    /// **Returns**
     /// A heap allocated string containing
     /// the cause of the error.
     #[cold]
