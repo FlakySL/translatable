@@ -50,17 +50,16 @@ pub enum RuntimeError {
 }
 
 impl RuntimeError {
-    /// This method makes use of the `Display` implemeted in
-    /// `Error` to display the formatted cause String of
-    /// the specific error.
+    /// Runtime error display helper.
     ///
-    /// This method is marked as `cold`, because in the application
-    /// there should be the least amount of errors possible,
-    /// when displaying the error, please do in a lazy
-    /// error handling method such as `ok_or_else` or `inspect_err`.
+    /// This method is marked as `cold`
+    /// so it should be called lazily with
+    /// monads such as `ok_or_else` or any
+    /// other `or_else` method.
     ///
     /// # Returns
-    /// The cause heap allocated String.
+    /// A heap allocated string containing
+    /// the cause of the error.
     #[cold]
     #[inline]
     pub fn cause(&self) -> String {
