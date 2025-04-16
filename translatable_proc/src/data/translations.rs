@@ -44,7 +44,7 @@ pub enum TranslationDataError {
         reason = _0.message(),
         span = _0
             .span()
-       .map(|range| format!("on {}:{}", range.start, range.end))
+            .map(|range| format!("on {}:{}", range.start, range.end))
             .unwrap_or_else(String::new)
     )]
     ParseToml(TomlError, String),
