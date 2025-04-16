@@ -31,7 +31,7 @@ impl TranslationNodeCollection {
     /// in that specific file.
     #[allow(unused)]
     pub fn get_node(&self, path: &str) -> Option<&TranslationNode> {
-        self.0.get(&path.to_string())
+        self.0.get(path)
     }
 
     /// This method is used to load a specific translation

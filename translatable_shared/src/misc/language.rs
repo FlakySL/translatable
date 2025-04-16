@@ -3,6 +3,67 @@ use quote::{ToTokens, TokenStreamExt, quote};
 use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 use syn::Ident;
 
+/// This struct represents a list of similar languages to the provided one.
+pub struct Similarities<T: Sized> {
+    /// Indicates how many languages are not included in the list.
+    overflow_by: usize,
+    /// List of similar languages.
+    similarities: Vec<T>,
+}
+
+impl<T: Sized> Similarities<T> {
+    pub fn overflow_by(&self) -> usize {
+        self.overflow_by
+    }
+
+    pub fn similarities(&self) -> &[T] {
+        &self.similarities
+    }
+}
+
+impl Language {
+    /// This method returns a list of similar languages to the provided one.
+    pub fn get_similarities(lang: &str, max_amount: usize) -> Similarities<String> {
+        let all_similarities = Self::iter()
+            .map(|variant| format!("{variant:#} ({variant:?})"))
+            .filter(|variant| variant.contains(lang))
+            .collect::<Vec<_>>();
+
+        let overflow_by = all_similarities.len() as i32 - max_amount as i32;
+
+        if overflow_by > 0 {
+            Similarities {
+                similarities: all_similarities.into_iter().take(max_amount).collect(),
+                overflow_by: overflow_by as usize,
+            }
+        } else {
+            Similarities {
+                similarities: all_similarities,
+                overflow_by: 0,
+            }
+        }
+    }
+}
+
+impl PartialEq<String> for Language {
+    fn eq(&self, other: &String) -> bool {
+        format!("{self:?}").to_lowercase() == other.to_lowercase()
+    }
+}
+
+/// This implementation converts the tagged union
+/// to an equivalent call from the runtime context.
+///
+/// This is exclusively meant to be used from the
+/// macro generation context.
+impl ToTokens for Language {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let ident = Ident::new(&format!("{self:?}"), Span::call_site());
+
+        tokens.append_all(quote! { translatable::shared::misc::language::Language::#ident })
+    }
+}
+
 /// ISO 639-1 language code implementation with validation
 ///
 /// Provides two-way mapping between language codes and names with:
@@ -378,65 +439,4 @@ pub enum Language {
     ZA,
     #[strum(serialize = "Zulu", serialize = "zu")]
     ZU,
-}
-
-/// This struct represents a list of similar languages to the provided one.
-pub struct Similarities<T: Sized> {
-    /// Indicates how many languages are not included in the list.
-    overflow_by: usize,
-    /// List of similar languages.
-    similarities: Vec<T>,
-}
-
-impl<T: Sized> Similarities<T> {
-    pub fn overflow_by(&self) -> usize {
-        self.overflow_by
-    }
-
-    pub fn similarities(&self) -> &[T] {
-        &self.similarities
-    }
-}
-
-impl Language {
-    /// This method returns a list of similar languages to the provided one.
-    pub fn get_similarities(lang: &str, max_amount: usize) -> Similarities<String> {
-        let all_similarities = Self::iter()
-            .map(|variant| format!("{variant:#} ({variant:?})"))
-            .filter(|variant| variant.contains(lang))
-            .collect::<Vec<_>>();
-
-        let overflow_by = all_similarities.len() as i32 - max_amount as i32;
-
-        if overflow_by > 0 {
-            Similarities {
-                similarities: all_similarities.into_iter().take(max_amount).collect(),
-                overflow_by: overflow_by as usize,
-            }
-        } else {
-            Similarities {
-                similarities: all_similarities,
-                overflow_by: 0,
-            }
-        }
-    }
-}
-
-impl PartialEq<String> for Language {
-    fn eq(&self, other: &String) -> bool {
-        format!("{self:?}").to_lowercase() == other.to_lowercase()
-    }
-}
-
-/// This implementation converts the tagged union
-/// to an equivalent call from the runtime context.
-///
-/// This is exclusively meant to be used from the
-/// macro generation context.
-impl ToTokens for Language {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
-        let ident = Ident::new(&format!("{self:?}"), Span::call_site());
-
-        tokens.append_all(quote! { translatable::shared::misc::language::Language::#ident })
-    }
 }

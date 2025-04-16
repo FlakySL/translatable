@@ -45,7 +45,7 @@ pub enum TranslationDataError {
         span = _0
             .span()
        .map(|range| format!("on {}:{}", range.start, range.end))
-            .unwrap_or_else(|| String::new())
+            .unwrap_or_else(String::new)
     )]
     ParseToml(TomlError, String),
 

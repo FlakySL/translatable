@@ -29,7 +29,7 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
             let static_path_display = path.join("::");
 
             let translation_object = translations
-                .find_path(&path)
+                .find_path(path)
                 .ok_or_else(|| MacroCompileError::PathNotFound(static_path_display.clone()));
 
             let translation =

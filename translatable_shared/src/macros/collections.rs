@@ -5,7 +5,7 @@ use quote::{ToTokens, quote};
 
 #[inline]
 pub fn map_to_tokens<K: ToTokens, V: ToTokens>(map: &HashMap<K, V>) -> TokenStream2 {
-    let map = map.into_iter().map(|(key, value)| {
+    let map = map.iter().map(|(key, value)| {
         let key = key.into_token_stream();
         let value = value.into_token_stream();
 

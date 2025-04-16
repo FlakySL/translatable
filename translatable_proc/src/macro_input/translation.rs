@@ -78,7 +78,7 @@ impl TranslationMacroArgsError {
 /// used in a `parse_macro_input!` call.
 impl Parse for TranslationMacroArgs {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        let parsed_langauge_arg = match input.parse::<Expr>()? {
+        let parsed_language_arg = match input.parse::<Expr>()? {
             Expr::Lit(ExprLit { lit: Lit::Str(literal), .. }) => {
                 match literal.value().parse::<Language>() {
                     Ok(language) => InputType::Static(language),
@@ -129,7 +129,7 @@ impl Parse for TranslationMacroArgs {
         }
 
         Ok(Self {
-            language: parsed_langauge_arg,
+            language: parsed_language_arg,
             path: parsed_path_arg,
             replacements,
         })
