@@ -1,18 +1,34 @@
+//! # Translatable
+//!
+//! A robust internationalization solution for
+//! Rust featuring compile-time validation,
+//! ISO 639-1 compliance, and TOML-based
+//! translation management.
+
 mod error;
 
-// A re-export to the runtime error
-// enum for user availabilty and
-// debugging.
+/// Runtime error re-export.
+///
+/// This `use` statement renames
+/// the run time error as a common
+/// error by rust practice and exports
+/// it.
 pub use error::RuntimeError as Error;
-/// A re-export from the Language enum
-/// for users to dynamically parse
-/// when using dynamic arguments.
-pub use shared::misc::language::Language;
-/// A re-export to the translation macro
-/// exported in the proc_macro module.
+
+/// Macro re-exports.
+///
+/// This `use` statement re-exports
+/// all the macros on `translatable_proc`
+/// which only work if included from
+/// this module due to path generation.
 pub use translatable_proc::translation;
-/// A re-export of all the shared modules
-/// as declared in the shared crate used
-/// for macro generation.
+
+/// User-facing util re-exports.
+///
+/// This `use` statement re-exports
+/// all the shared module items that
+/// are useful for the end-user.
+pub use shared::misc::language::Language;
+
 #[doc(hidden)]
 pub use translatable_shared as shared;
