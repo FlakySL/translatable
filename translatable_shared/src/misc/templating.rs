@@ -2,9 +2,12 @@ use std::collections::HashMap;
 use std::ops::Range;
 use std::str::FromStr;
 
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{ToTokens, TokenStreamExt, quote};
 use syn::{Ident, parse_str};
 use thiserror::Error;
-use unicode_xid::UnicodeXID;
+
+use crate::macros::collections::map_transform_to_tokens;
 
 #[derive(Error, Debug)]
 pub enum TemplateError {
@@ -14,13 +17,6 @@ pub enum TemplateError {
 
     #[error("Found template with key '{0}' which is an invalid identifier")]
     InvalidIdent(String),
-
-    // Compile errors
-    #[error("Found template with a non compliant XID key, found invalid start character '{0}'")]
-    InvalidxIdStart(char),
-
-    #[error("Found template with a non compliant XID key, found invalid rest character '{0}'")]
-    InvalidxIdRest(char),
 }
 
 pub struct FormatString {
@@ -29,24 +25,35 @@ pub struct FormatString {
 }
 
 impl FormatString {
-    pub fn replace_with(mut self, values: HashMap<String, String>) -> String {
-        let mut replacements = self.spans.into_iter().collect::<Vec<(String, Range<usize>)>>();
-        replacements.sort_by_key(|(_key, range)| range.start);
+    pub fn from_data(original: &str, spans: HashMap<String, Range<usize>>) -> Self {
+        Self { original: original.to_string(), spans }
+    }
+
+    pub fn replace_with(&self, values: HashMap<String, String>) -> String {
+        let mut original = self
+            .original
+            .clone();
+        let mut spans = self
+            .spans
+            .iter()
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect::<Vec<(String, Range<usize>)>>();
+        spans.sort_by_key(|(_key, range)| range.start);
 
         let mut offset = 0isize;
 
-        for (key, range) in replacements {
+        for (key, range) in spans {
             if let Some(value) = values.get(&key) {
                 let start = (range.start as isize + offset) as usize;
                 let end = (range.end as isize + offset) as usize;
 
-                self.original.replace_range(start..end, value);
+                original.replace_range(start..end, value);
 
                 offset += value.len() as isize - (range.end - range.start) as isize;
             }
         }
 
-        self.original
+        original
     }
 }
 
@@ -57,11 +64,17 @@ impl FromStr for FormatString {
         let original = s.to_string();
         let mut spans = HashMap::new();
 
-        let char_to_byte = s.char_indices().map(|(i, _)| i).collect::<Vec<usize>>();
+        let char_to_byte = s
+            .char_indices()
+            .map(|(i, _)| i)
+            .collect::<Vec<usize>>();
 
         let mut last_bracket_idx = None;
         let mut current_tmpl_key = String::new();
-        for (char_idx, c) in original.chars().enumerate() {
+        for (char_idx, c) in original
+            .chars()
+            .enumerate()
+        {
             match (c, last_bracket_idx) {
                 // if last template index is the last character
                 // ignore current as is escaped.
@@ -100,40 +113,22 @@ impl FromStr for FormatString {
     }
 }
 
-#[macro_export]
-macro_rules! replace_templates {
-    ($orig:expr, $($key:ident = $value:expr),* $(,)?) => {{
-        $orig.parse::<$crate::misc::templating::FormatString>()
-            .map(|parsed| parsed
-                .replace_with(
-                    vec![$((stringify!($key).to_string(), $value.to_string())),*]
-                        .into_iter()
-                        .collect::<std::collections::HashMap<String, String>>()
-                )
+impl ToTokens for FormatString {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let original = &self.original;
+
+        let span_map = map_transform_to_tokens(&self.spans, |key, range| {
+            let range_start = range.start;
+            let range_end = range.end;
+
+            quote! { (#key.to_string(), #range_start..#range_end) }
+        });
+
+        tokens.append_all(quote! {
+            translatable::shared::misc::templating::FormatString::from_data(
+                #original,
+                #span_map
             )
-    }}
-}
-
-pub fn validate_format_string(original: &str) -> Result<(), TemplateError> {
-    let mut last_bracket_idx = 0usize;
-
-    for (i, c) in original.chars().enumerate() {
-        match (c, last_bracket_idx) {
-            ('{', lbi) if lbi != i.saturating_sub(1) => last_bracket_idx = i,
-            ('{', lbi) if lbi == i.saturating_sub(1) => last_bracket_idx = 0,
-            ('}', lbi) if lbi != 0 => last_bracket_idx = 0,
-
-            (c, lbi) if i > 0 && lbi == i - 1 && !c.is_xid_start() => {
-                return Err(TemplateError::InvalidxIdStart(c));
-            },
-
-            (c, lbi) if lbi != 0 && !c.is_xid_continue() => {
-                return Err(TemplateError::InvalidxIdRest(c));
-            },
-
-            _ => {},
-        }
+        });
     }
-
-    Ok(())
 }

@@ -122,24 +122,37 @@ pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
     }
 
     // Load base configuration from TOML file
-    let toml_content =
-        read_to_string("./translatable.toml").unwrap_or_default().parse::<Table>()?;
+    let toml_content = read_to_string("./translatable.toml")
+        .unwrap_or_default()
+        .parse::<Table>()?;
 
     macro_rules! config_value {
         ($env_var:expr, $key:expr, $default:expr) => {
             var($env_var)
                 .ok()
-                .or_else(|| toml_content.get($key).and_then(|v| v.as_str()).map(|v| v.to_string()))
+                .or_else(|| {
+                    toml_content
+                        .get($key)
+                        .and_then(|v| v.as_str())
+                        .map(|v| v.to_string())
+                })
                 .unwrap_or_else(|| $default.into())
         };
 
         (parse($env_var:expr, $key:expr, $default:expr)) => {{
             let value = var($env_var)
                 .ok()
-                .or_else(|| toml_content.get($key).and_then(|v| v.as_str()).map(|v| v.to_string()));
+                .or_else(|| {
+                    toml_content
+                        .get($key)
+                        .and_then(|v| v.as_str())
+                        .map(|v| v.to_string())
+                });
 
             if let Some(value) = value {
-                value.parse().map_err(|_| ConfigError::InvalidValue($key.into(), value.into()))
+                value
+                    .parse()
+                    .map_err(|_| ConfigError::InvalidValue($key.into(), value.into()))
             } else {
                 Ok($default)
             }

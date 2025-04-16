@@ -2,7 +2,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
 use thiserror::Error;
 use translatable_shared::handle_macro_result;
-use translatable_shared::macros::collections::map_to_tokens;
+use translatable_shared::macros::collections::{map_to_tokens, map_transform_to_tokens};
 use translatable_shared::misc::language::Language;
 
 use crate::data::translations::load_translations;
@@ -21,8 +21,10 @@ enum MacroCompileError {
 pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
     let translations = handle_macro_result!(load_translations());
 
-    let template_replacements =
-        input.replacements().iter().map(|(key, value)| quote! { #key = #value });
+    let template_replacements = map_transform_to_tokens(
+        input.replacements(),
+        |key, value| quote! { (stringify!(#key).to_string(), #value.to_string()) },
+    );
 
     if let InputType::Static(language) = input.language() {
         if let InputType::Static(path) = input.path() {
@@ -32,27 +34,28 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
                 .find_path(path)
                 .ok_or_else(|| MacroCompileError::PathNotFound(static_path_display.clone()));
 
-            let translation =
-                handle_macro_result!(translation_object).get(language).ok_or_else(|| {
-                    MacroCompileError::LanguageNotAvailable(
-                        language.clone(),
-                        static_path_display.clone(),
-                    )
-                });
-
-            let translation = handle_macro_result!(translation).into_token_stream();
+            let translation = handle_macro_result!(
+                handle_macro_result!(translation_object)
+                    .get(language)
+                    .ok_or_else(|| {
+                        MacroCompileError::LanguageNotAvailable(
+                            language.clone(),
+                            static_path_display.clone(),
+                        )
+                    })
+            );
 
             return quote! {
-                translatable::shared::replace_templates!(
-                    #translation,
-                    #(#template_replacements),*
-                )
+                #translation
+                    .replace_with(#template_replacements)
             };
         }
     }
 
     let language = match input.language() {
-        InputType::Static(language) => language.clone().to_token_stream(),
+        InputType::Static(language) => language
+            .clone()
+            .to_token_stream(),
         InputType::Dynamic(language) => quote! {
             translatable::shared::misc::language::Language::from(#language)
         },
@@ -96,15 +99,10 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
                 #[doc(hidden)]
                 let language = #language;
 
-                translatable::shared::replace_templates!(
-                    {
-                        #translation_object
-                            .get(&language)
-                            .ok_or_else(|| translatable::Error::LanguageNotAvailable(language, path.join("::")))?
-                            .to_string()
-                    },
-                    #(#template_replacements),*
-                )?
+                #translation_object
+                    .get(&language)
+                    .ok_or_else(|| translatable::Error::LanguageNotAvailable(language, path.join("::")))?
+                    .replace_with(#template_replacements)
             })
         })()
     }

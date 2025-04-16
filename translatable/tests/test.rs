@@ -7,7 +7,7 @@ const RESULT: &str = "¡Hola John Doe!";
 #[test]
 fn both_static() {
     let result = translation!("es", static common::greeting, name = NAME, surname = SURNAME);
-    assert!(result.unwrap() == RESULT);
+    assert!(result == RESULT);
 }
 
 #[test]

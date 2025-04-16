@@ -80,7 +80,10 @@ impl Parse for TranslationMacroArgs {
     fn parse(input: ParseStream) -> SynResult<Self> {
         let parsed_language_arg = match input.parse::<Expr>()? {
             Expr::Lit(ExprLit { lit: Lit::Str(literal), .. }) => {
-                match literal.value().parse::<Language>() {
+                match literal
+                    .value()
+                    .parse::<Language>()
+                {
                     Ok(language) => InputType::Static(language),
 
                     Err(_) => Err(TranslationMacroArgsError::InvalidIsoLiteral(literal.value())
@@ -100,7 +103,9 @@ impl Parse for TranslationMacroArgs {
                     .segments
                     .into_iter()
                     .map(|segment| match segment.arguments {
-                        PathArguments::None => Ok(segment.ident.to_string()),
+                        PathArguments::None => Ok(segment
+                            .ident
+                            .to_string()),
 
                         other => Err(TranslationMacroArgsError::InvalidPathContainsGenerics
                             .into_syn_error(other)),
@@ -110,7 +115,11 @@ impl Parse for TranslationMacroArgs {
                 InputType::Static(language_arg)
             },
 
-            Err(_) => InputType::Dynamic(input.parse::<Expr>()?.to_token_stream()),
+            Err(_) => InputType::Dynamic(
+                input
+                    .parse::<Expr>()?
+                    .to_token_stream(),
+            ),
         };
 
         let mut replacements = HashMap::new();
@@ -119,9 +128,13 @@ impl Parse for TranslationMacroArgs {
                 input.parse::<Token![,]>()?;
                 let key = input.parse::<Ident>()?;
                 let value = match input.parse::<Token![=]>() {
-                    Ok(_) => input.parse::<Expr>()?.to_token_stream(),
+                    Ok(_) => input
+                        .parse::<Expr>()?
+                        .to_token_stream(),
 
-                    Err(_) => key.clone().into_token_stream(),
+                    Err(_) => key
+                        .clone()
+                        .into_token_stream(),
                 };
 
                 replacements.insert(key, value);

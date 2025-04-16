@@ -6,9 +6,9 @@ use strum::ParseError;
 use thiserror::Error;
 use toml::{Table, Value};
 
-use crate::macros::collections::map_transform_to_tokens;
+use crate::macros::collections::{map_to_tokens, map_transform_to_tokens};
 use crate::misc::language::Language;
-use crate::misc::templating::{TemplateError, validate_format_string};
+use crate::misc::templating::{FormatString, TemplateError};
 
 /// Errors occurring during TOML-to-translation structure transformation
 #[derive(Error, Debug)]
@@ -31,11 +31,10 @@ pub enum TranslationNodeError {
 }
 
 pub type TranslationNesting = HashMap<String, TranslationNode>;
-pub type TranslationObject = HashMap<Language, String>;
+pub type TranslationObject = HashMap<Language, FormatString>;
 
 /// Represents nested translation structure,
 /// as it is on the translation files.
-#[derive(Clone)]
 pub enum TranslationNode {
     /// Nested namespace containing other translation objects
     Nesting(TranslationNesting),
@@ -52,14 +51,21 @@ impl TranslationNode {
     /// # Returns
     /// Reference to translations if path exists and points to leaf node
     pub fn find_path<I: ToString>(&self, path: &Vec<I>) -> Option<&TranslationObject> {
-        let path = path.iter().map(|i| i.to_string()).collect::<Vec<String>>();
+        let path = path
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<String>>();
 
         match self {
             Self::Nesting(nested) => {
                 let (first, rest) = path.split_first()?;
-                nested.get(first)?.find_path(&rest.to_vec())
+                nested
+                    .get(first)?
+                    .find_path(&rest.to_vec())
             },
-            Self::Translation(translation) => path.is_empty().then_some(translation),
+            Self::Translation(translation) => path
+                .is_empty()
+                .then_some(translation),
         }
     }
 }
@@ -86,10 +92,7 @@ impl ToTokens for TranslationNode {
             },
 
             TranslationNode::Translation(translation) => {
-                let map = map_transform_to_tokens(
-                    translation,
-                    |key, value| quote! { (#key, #value.to_string()) },
-                );
+                let map = map_to_tokens(translation);
 
                 tokens.append_all(quote! {
                     translatable::shared::translations::node::TranslationNode::Translation(
@@ -118,8 +121,7 @@ impl TryFrom<Table> for TranslationNode {
 
                     match result {
                         Self::Translation(translation) => {
-                            validate_format_string(&translation_value)?;
-                            translation.insert(key.parse()?, translation_value);
+                            translation.insert(key.parse()?, translation_value.parse()?);
                         },
 
                         Self::Nesting(_) => return Err(TranslationNodeError::InvalidNesting),

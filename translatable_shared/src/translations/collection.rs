@@ -31,7 +31,8 @@ impl TranslationNodeCollection {
     /// in that specific file.
     #[allow(unused)]
     pub fn get_node(&self, path: &str) -> Option<&TranslationNode> {
-        self.0.get(path)
+        self.0
+            .get(path)
     }
 
     /// This method is used to load a specific translation
@@ -47,7 +48,9 @@ impl TranslationNodeCollection {
     /// A translation object containing a specific translation
     /// in all it's available languages.
     pub fn find_path<I: ToString>(&self, path: &Vec<I>) -> Option<&TranslationObject> {
-        self.0.values().find_map(|node| node.find_path(path))
+        self.0
+            .values()
+            .find_map(|node| node.find_path(path))
     }
 }
 
@@ -55,7 +58,10 @@ impl TranslationNodeCollection {
 /// in a `TranslationNodeCollection`.
 impl FromIterator<(String, TranslationNode)> for TranslationNodeCollection {
     fn from_iter<T: IntoIterator<Item = (String, TranslationNode)>>(iter: T) -> Self {
-        Self(iter.into_iter().collect())
+        Self(
+            iter.into_iter()
+                .collect(),
+        )
     }
 }
 

@@ -5,12 +5,14 @@ use quote::{ToTokens, quote};
 
 #[inline]
 pub fn map_to_tokens<K: ToTokens, V: ToTokens>(map: &HashMap<K, V>) -> TokenStream2 {
-    let map = map.iter().map(|(key, value)| {
-        let key = key.into_token_stream();
-        let value = value.into_token_stream();
+    let map = map
+        .iter()
+        .map(|(key, value)| {
+            let key = key.into_token_stream();
+            let value = value.into_token_stream();
 
-        quote! { (#key, #value) }
-    });
+            quote! { (#key, #value) }
+        });
 
     quote! {
         vec![#(#map),*]
@@ -22,11 +24,11 @@ pub fn map_to_tokens<K: ToTokens, V: ToTokens>(map: &HashMap<K, V>) -> TokenStre
 #[inline]
 pub fn map_transform_to_tokens<K, V, F>(map: &HashMap<K, V>, predicate: F) -> TokenStream2
 where
-    K: ToTokens,
-    V: ToTokens,
     F: Fn(&K, &V) -> TokenStream2,
 {
-    let processed = map.iter().map(|(key, value)| predicate(key, value));
+    let processed = map
+        .iter()
+        .map(|(key, value)| predicate(key, value));
 
     quote! {
         vec![#(#processed),*]

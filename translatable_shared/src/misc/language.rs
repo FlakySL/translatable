@@ -33,7 +33,10 @@ impl Language {
 
         if overflow_by > 0 {
             Similarities {
-                similarities: all_similarities.into_iter().take(max_amount).collect(),
+                similarities: all_similarities
+                    .into_iter()
+                    .take(max_amount)
+                    .collect(),
                 overflow_by: overflow_by as usize,
             }
         } else {

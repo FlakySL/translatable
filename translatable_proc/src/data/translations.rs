@@ -74,9 +74,16 @@ fn walk_dir(path: &str) -> Result<Vec<String>, TranslationDataError> {
         for entry in directory {
             let path = entry.path();
             if path.is_dir() {
-                stack.push(path.to_str().ok_or(TranslationDataError::InvalidUnicode)?.to_string());
+                stack.push(
+                    path.to_str()
+                        .ok_or(TranslationDataError::InvalidUnicode)?
+                        .to_string(),
+                );
             } else {
-                result.push(path.to_string_lossy().to_string());
+                result.push(
+                    path.to_string_lossy()
+                        .to_string(),
+                );
             }
         }
     }

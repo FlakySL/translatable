@@ -15,4 +15,3 @@ strum = { version = "0.27.1", features = ["derive", "strum_macros"] }
 syn = { version = "2.0.100", features = ["full"] }
 thiserror = "2.0.12"
 toml = "0.8.20"
-unicode-xid = "0.2.6"
