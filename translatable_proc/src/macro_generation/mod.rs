@@ -6,6 +6,8 @@
 //! modules may be issued with intrinsics
 //! from the [`macro_input`] module.
 //!
+//! Each module represents a single macro.
+//!
 //! [`macro_input`]: crate::macro_input
 
 pub mod translation;
