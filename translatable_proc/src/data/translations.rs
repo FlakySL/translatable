@@ -1,3 +1,13 @@
+//! Translation obtention module.
+//!
+//! This module is used to obtain
+//! translations from their respective files.
+//!
+//! This module uses `crate::data::config` to
+//! to load the translations and order them
+//! based on the configuration provided
+//! by the module.
+
 use std::fs::{read_dir, read_to_string};
 use std::io::Error as IoError;
 use std::sync::OnceLock;
@@ -10,35 +20,69 @@ use translatable_shared::translations::node::{TranslationNode, TranslationNodeEr
 
 use super::config::{ConfigError, SeekMode, TranslationOverlap, load_config};
 
-/// Contains error definitions for what may go wrong while
-/// loading a translation.
+/// Translation retrieval error enum.
+///
+/// Represents errors that can occur during compile-time translation
+/// retrieval. This includes I/O issues, configuration loading failures,
+/// TOML deserialization errors, and translation node parsing errors.
+///
+/// The errors from this enum are directly surfaced in `rust-analyzer`
+/// to assist with early detection and debugging.
 #[derive(Error, Debug)]
 pub enum TranslationDataError {
-    /// Represents a generic IO error, if a file couldn't
-    /// be opened, a path could not be found... This error
-    /// will be inferred from an `std::io::Error`.
+    /// I/O error derivation.
+    ///
+    /// Raised when an I/O operation fails during translation
+    /// retrieval, typically caused by filesystem-level issues.
+    ///
+    /// `Display` will forward the inner `IoError` representation
+    /// prefixed with additional context.
+    ///
+    /// The enum implements `From<std::io::Error>` to allow
+    /// automatic conversion from `IoError`.
+    ///
+    /// **Parameters**
+    /// * `0` — The underlying I/O error.
     #[error("There was a problem with an IO operation: {0:#}")]
-    SystemIo(#[from] IoError),
+    Io(#[from] IoError),
 
-    /// Used to convert any configuration loading error
-    /// into a `TranslationDataError`, error messages are
-    /// handled by the `ConfigError` itself.
+    /// Configuration loading failure.
+    ///
+    /// Raised when the translation configuration cannot be loaded
+    /// successfully, typically due to invalid values or missing
+    /// configuration data.
+    ///
+    /// `Display` will forward the inner `ConfigError` message.
+    ///
+    /// The enum implements `From<ConfigError>` to allow automatic
+    /// conversion from the underlying error.
+    ///
+    /// **Parameters**
+    /// * `0` — The configuration error encountered.
     #[error("{0:#}")]
     LoadConfig(#[from] ConfigError),
 
-    /// Specific conversion error for when a path can't be converted
-    /// to a manipulable string because it contains invalid
-    /// unicode characters.
+    /// Invalid Unicode path.
+    ///
+    /// Raised when a filesystem path cannot be processed due to
+    /// invalid Unicode characters.
+    ///
+    /// This error signals that the translation system cannot proceed
+    /// with a non-Unicode-compatible path.
     #[error("Couldn't open path, found invalid unicode characters")]
     InvalidUnicode,
 
-    /// Represents a TOML deserialization error, this happens while
-    /// loading files and converting their content to TOML.
+    /// TOML deserialization failure.
     ///
-    /// # Arguments
-    /// * `.0` - The RAW toml::de::Error returned by the deserialization
-    /// function.
-    /// * `.1` - The path where the file was originally found.
+    /// Raised when the contents of a translation file cannot be
+    /// parsed as valid TOML data.
+    ///
+    /// The formatted error message includes the deserialization reason,
+    /// the location within the file (if available), and the file path.
+    ///
+    /// **Parameters**
+    /// * `0` — The `TomlError` carrying the underlying deserialization error.
+    /// * `1` — The file path of the TOML file being parsed.
     #[error(
         "TOML Deserialization error '{reason}' {span} in {1}",
         reason = _0.message(),
@@ -49,25 +93,47 @@ pub enum TranslationDataError {
     )]
     ParseToml(TomlError, String),
 
+    /// Translation node parsing failure.
+    ///
+    /// Raised when the translation system cannot correctly parse
+    /// a translation node, typically due to invalid formatting
+    /// or missing expected data.
+    ///
+    /// The enum implements `From<TranslationNodeError>` for
+    /// seamless conversion.
+    ///
+    /// **Parameters**
+    /// * `0` — The translation node error encountered.
     #[error("{0:#}")]
     Node(#[from] TranslationNodeError),
 }
 
-/// Global thread-safe cache for loaded translations
+/// Global thread-safe cache for loaded translations.
+///
+/// Stores all parsed translations in memory after the first
+/// successful load. Uses `OnceLock` to ensure that the translation
+/// data is initialized only once in a thread-safe manner.
 static TRANSLATIONS: OnceLock<TranslationNodeCollection> = OnceLock::new();
 
-/// Recursively walks directory to find all translation files
+/// Recursively walks the target directory to discover all translation files.
 ///
-/// # Arguments
-/// * `path` - Root directory to scan
+/// Uses an iterative traversal strategy to avoid recursion depth limitations.
+/// Paths are returned as `String` values, ready for processing.
 ///
-/// # Returns
-/// Vec of file paths or TranslationError
+/// Any filesystem errors, invalid paths, or read failures are reported
+/// via `TranslationDataError`.
+///
+/// **Arguments**
+/// * `path` — Root directory to scan for translation files.
+///
+/// **Returns**
+/// A `Result` containing either:
+/// * `Ok(Vec<String>)` — A flat list of discovered file paths.
+/// * `Err(TranslationDataError)` — If traversal fails at any point.
 fn walk_dir(path: &str) -> Result<Vec<String>, TranslationDataError> {
     let mut stack = vec![path.to_string()];
     let mut result = Vec::new();
 
-    // Use iterative approach to avoid recursion depth limits
     while let Some(current_path) = stack.pop() {
         let directory = read_dir(&current_path)?.collect::<Result<Vec<_>, _>>()?;
 
@@ -91,15 +157,26 @@ fn walk_dir(path: &str) -> Result<Vec<String>, TranslationDataError> {
     Ok(result)
 }
 
-/// Loads and caches translations from configured directory
+/// Loads and caches translations from the configured directory.
 ///
-/// # Returns
-/// Reference to cached translations or TranslationError
+/// On the first invocation, this function:
+/// - Reads the translation directory path from the loaded configuration.
+/// - Recursively walks the directory to discover all translation files.
+/// - Sorts the file list according to the configured `seek_mode`.
+/// - Parses each file and validates its content.
 ///
-/// # Implementation Details
-/// - Uses OnceLock for thread-safe initialization
-/// - Applies sorting based on configuration
-/// - Handles file parsing and validation
+/// Once successfully loaded, the parsed translations are stored
+/// in a global `OnceLock`-backed cache and reused for the lifetime
+/// of the process.
+///
+/// This function will return a reference to the cached translations
+/// on every subsequent call.
+///
+/// **Returns**
+/// A `Result` containing either:
+/// * `Ok(&TranslationNodeCollection)` — The parsed and cached translations.
+/// * `Err(TranslationDataError)` — An error because any of the translation
+///   files couldn't be read.
 pub fn load_translations() -> Result<&'static TranslationNodeCollection, TranslationDataError> {
     if let Some(translations) = TRANSLATIONS.get() {
         return Ok(translations);

@@ -27,9 +27,11 @@ pub enum RuntimeError {
     /// template validation...
     ///
     /// `Display` directly forwards the inner
-    /// error `Display` value. The enum implements
-    /// `From<TranslationNodeError>` to wrap the
-    /// original error.
+    /// error `Display` value.
+    ///
+    /// The enum implements
+    /// `From<TranslationNodeError>` to allow
+    /// conversion from `TranslationNodeError`.
     ///
     /// **Parameters**
     /// * `0` - The TranslationNodeError derivation.

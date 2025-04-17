@@ -16,7 +16,7 @@ use toml::de::Error as TomlError;
 
 /// Configuration error enum.
 ///
-/// Used for compiletime configuration
+/// Used for compile time configuration
 /// errors, such as errors while opening
 /// files or parsing a file format.
 ///
@@ -30,9 +30,10 @@ pub enum ConfigError {
     /// with the file system.
     ///
     /// `Display` forwards the inner error `Display`
-    /// value with some prefix text. The enum
-    /// implements `From<std::io::Error>` to wrap
-    /// the error.
+    /// value with some prefix text.
+    ///
+    /// The enum implements `From<std::io::Error>` to
+    /// allow conversion from `std::io::Error`.
     ///
     /// **Parameters**
     /// * `0` - The IO error derivation.
@@ -46,9 +47,10 @@ pub enum ConfigError {
     ///
     /// The error is formatted displaying
     /// the file name hardcoded as `./translatable.toml`
-    /// and appended with the line and character. The
-    /// enum implements `From<toml::de::Error>` to wrap
-    /// the error.
+    /// and appended with the line and character.
+    ///
+    /// The enum implements `From<toml::de::Error>` to
+    /// allow conversion from `toml::de::Error`
     ///
     /// **Parameters**
     /// * `0` - The TOML deserialization error derivation.
@@ -187,14 +189,12 @@ static TRANSLATABLE_CONFIG: OnceLock<MacroConfig> = OnceLock::new();
 /// The configuration is cached after the first successful load, and reused on
 /// subsequent calls.
 ///
-/// Disclaimers:
-/// - Must be called before any translation logic that depends on configuration.
-/// - If `translatable.toml` is malformed or contains invalid values, the function
-///   will return an error.
-///
 /// **Returns**
-/// `Ok(&MacroConfig)` — if the configuration is successfully loaded or already cached.
-/// `Err(ConfigError)` — if loading or parsing fails.
+/// A `Result` containing either:
+/// * `Ok(&MacroConfig)` — The loaded configuration as a reference to the cached
+///   macro configuration.
+/// * `Err(ConfigError)` — An error because environment couldn't be read or
+///   `translatable.toml` couldn't be read.
 pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
     if let Some(config) = TRANSLATABLE_CONFIG.get() {
         return Ok(config);
@@ -238,11 +238,7 @@ pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
     }
 
     let config = MacroConfig {
-        path: config_value!(
-            "TRANSLATABLE_LOCALES_PATH",
-            "path",
-            "./translations"
-        ),
+        path: config_value!("TRANSLATABLE_LOCALES_PATH", "path", "./translations"),
         overlap: config_value!(parse(
             "TRANSLATABLE_OVERLAP",
             "overlap",

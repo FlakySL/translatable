@@ -14,7 +14,12 @@ mod error;
 /// error by rust practice and exports
 /// it.
 pub use error::RuntimeError as Error;
-
+/// User-facing util re-exports.
+///
+/// This `use` statement re-exports
+/// all the shared module items that
+/// are useful for the end-user.
+pub use shared::misc::language::Language;
 /// Macro re-exports.
 ///
 /// This `use` statement re-exports
@@ -22,13 +27,5 @@ pub use error::RuntimeError as Error;
 /// which only work if included from
 /// this module due to path generation.
 pub use translatable_proc::translation;
-
-/// User-facing util re-exports.
-///
-/// This `use` statement re-exports
-/// all the shared module items that
-/// are useful for the end-user.
-pub use shared::misc::language::Language;
-
 #[doc(hidden)]
 pub use translatable_shared as shared;
