@@ -29,14 +29,17 @@ pub enum ConfigError {
     /// Usually errors while interacting
     /// with the file system.
     ///
-    /// `Display` forwards the inner error `Display`
+    /// [`Display`] forwards the inner error [`Display`]
     /// value with some prefix text.
     ///
-    /// The enum implements `From<std::io::Error>` to
-    /// allow conversion from `std::io::Error`.
+    /// The enum implements [`From<std::io::Error>`] to
+    /// allow conversion from [`std::io::Error`].
     ///
     /// **Parameters**
     /// * `0` - The IO error derivation.
+    ///
+    /// [`Display`]: std::fmt::Display
+    /// [`From<std::io::Error>`]: std::io::Error
     #[error("IO error reading configuration: {0:#}")]
     Io(#[from] IoError),
 
@@ -49,11 +52,13 @@ pub enum ConfigError {
     /// the file name hardcoded as `./translatable.toml`
     /// and appended with the line and character.
     ///
-    /// The enum implements `From<toml::de::Error>` to
-    /// allow conversion from `toml::de::Error`
+    /// The enum implements [`From<toml::de::Error>`] to
+    /// allow conversion from [`toml::de::Error`]
     ///
     /// **Parameters**
     /// * `0` - The TOML deserialization error derivation.
+    ///
+    /// [`From<toml::de::Error>`]: toml::de::Error
     #[error(
         "TOML parse error '{}'{}",
         .0.message(),
@@ -173,15 +178,15 @@ impl MacroConfig {
 
 /// Global configuration cache.
 ///
-/// Stores the initialized `MacroConfig` instance, which holds the configuration
-/// for the translation system. The `OnceLock` ensures the configuration is
-/// initialized only once and can be safely accessed across multiple threads
-/// after that initialization.
+/// Stores the initialized [`MacroConfig`] instance, which holds the
+/// configuration for the translation system. The [`OnceLock`] ensures the
+/// configuration is initialized only once and can be safely accessed across
+/// multiple threads after that initialization.
 static TRANSLATABLE_CONFIG: OnceLock<MacroConfig> = OnceLock::new();
 
 /// Load the global translation configuration.
 ///
-/// Initializes and returns a reference to the shared `MacroConfig` instance.
+/// Initializes and returns a reference to the shared [`MacroConfig`] instance.
 /// Configuration values are loaded in the following priority order:
 /// environment variables override `translatable.toml`, and missing values fall
 /// back to hardcoded defaults.
@@ -191,10 +196,13 @@ static TRANSLATABLE_CONFIG: OnceLock<MacroConfig> = OnceLock::new();
 ///
 /// **Returns**
 /// A `Result` containing either:
-/// * `Ok(&MacroConfig)` — The loaded configuration as a reference to the cached
-///   macro configuration.
-/// * `Err(ConfigError)` — An error because environment couldn't be read or
+/// * [`Ok(&MacroConfig)`] — The loaded configuration as a reference to the
+///   cached macro configuration.
+/// * [`Err(ConfigError)`] — An error because environment couldn't be read or
 ///   `translatable.toml` couldn't be read.
+///
+/// [`Ok(&MacroConfig)`]: MacroConfig
+/// [`Err(ConfigError)`]: ConfigError
 pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
     if let Some(config) = TRANSLATABLE_CONFIG.get() {
         return Ok(config);

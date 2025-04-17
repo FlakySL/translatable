@@ -32,7 +32,8 @@ enum MacroCompileError {
     #[error("The path '{0}' could not be found")]
     PathNotFound(String),
 
-    /// The requested language is not available for the provided translation path.
+    /// The requested language is not available for the provided translation
+    /// path.
     ///
     /// **Parameters**
     /// * `0` — The requested `Language`.

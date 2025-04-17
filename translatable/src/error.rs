@@ -11,30 +11,38 @@ use translatable_shared::translations::node::TranslationNodeError;
 
 /// Macro runtime error handling.
 ///
-/// Used in `translation!(...)` invocations for non
+/// Used in [`translation`] invocations for non
 /// compile-time validations and errors.
 ///
-/// Use the `Display` implementation to obtain the
-/// error message, `self.cause()` is available as
+/// Use the [`Display`] implementation to obtain the
+/// error message, [`Self::cause`] is available as
 /// a helper method for such purpose. Read it's
 /// documentation before using.
+///
+/// [`translation`]: crate::translation
+/// [`Display`]: std::fmt::Display
 #[derive(Error, Debug)]
 pub enum RuntimeError {
     /// Translation node error derivations.
     ///
-    /// `TranslationNode` construction failure,
-    /// usually nesting missmatch, invalid
+    /// [`TranslationNode`] construction
+    /// failure, usually nesting missmatch, invalid
     /// template validation...
     ///
-    /// `Display` directly forwards the inner
-    /// error `Display` value.
+    /// [`Display`] directly forwards the inner
+    /// error [`Display`] value.
     ///
     /// The enum implements
-    /// `From<TranslationNodeError>` to allow
-    /// conversion from `TranslationNodeError`.
+    /// [`From<TranslationNodeError>`] to allow
+    /// conversion from
+    /// [`TranslationNodeError`].
     ///
     /// **Parameters**
-    /// * `0` - The TranslationNodeError derivation.
+    /// * `0` - The [`TranslationNodeError`] derivation.
+    ///
+    /// [`TranslationNode`]: crate::shared::translations::node::TranslationNode
+    /// [`TranslationNodeError`]: crate::shared::translations::node::TranslationNodeError
+    /// [`Display`]: std::fmt::Display
     #[error("{0:#}")]
     TranslationNode(#[from] TranslationNodeError),
 
@@ -44,12 +52,14 @@ pub enum RuntimeError {
     /// in any of the translation files.
     ///
     /// This is not related to runtime language
-    /// validity, check `Error::LanguageNotAvailable`
+    /// validity, check [`LanguageNotAvailable`]
     /// for that purpose.
     ///
     /// **Parameters**
     /// * `0` - The path that could not be found
     /// appended with it's separator.
+    ///
+    /// [`LanguageNotAvailable`]: crate::Error::LanguageNotAvailable
     #[error("The path '{0}' could not be found")]
     PathNotFound(String),
 
@@ -59,8 +69,8 @@ pub enum RuntimeError {
     /// is not available for a specific translation.
     ///
     /// Language parsing is delegated to the user,
-    /// the language parameter must be a `Language`,
-    /// if it's a &str the validation is made in compile
+    /// the language parameter must be a [`Language`],
+    /// if it's a &[`str`] the validation is made in compile
     /// time. In that case we don't reach runtime.
     ///
     /// **Parameters**
@@ -74,14 +84,16 @@ pub enum RuntimeError {
 impl RuntimeError {
     /// Runtime error display helper.
     ///
-    /// This method is marked as `cold`
+    /// This method is marked as `#[cold]`
     /// so it should be called lazily with
-    /// monads such as `ok_or_else` or any
+    /// monads such as [`ok_or_else`] or any
     /// other `or_else` method.
     ///
     /// **Returns**
-    /// A heap allocated string containing
+    /// A heap allocated [`String`] containing
     /// the cause of the error.
+    ///
+    /// [`ok_or_else`]: std::option::Option::ok_or_else
     #[cold]
     #[inline]
     pub fn cause(&self) -> String {

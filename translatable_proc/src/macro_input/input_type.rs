@@ -1,3 +1,8 @@
+//! Input type abstraction for macro argument separation.
+//!
+//! This module defines the [`InputType`] enum, which is used to
+//! distinguish between static and dynamic values during macro input parsing.
+
 use proc_macro2::TokenStream as TokenStream2;
 
 /// This enum abstracts (in the programming sense)
