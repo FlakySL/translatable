@@ -26,9 +26,11 @@ mod macro_input;
 /// **Parameters**
 /// * `language` - A string literal for static inference or an instance of
 /// `translatable::Language` for dynamic inference.
-/// * `path` - A pat prefixed with `static` for static inference or a `Vec<impl ToString>`
+/// * `path` - A pat prefixed with `static` for static inference or a `Vec<impl
+///   ToString>`
 /// for dynamic inference.
-/// * `replacements` - Arguments similar to python's `kwargs` for the translation replacements.
+/// * `replacements` - Arguments similar to python's `kwargs` for the
+///   translation replacements.
 ///
 /// This macro provides optimizations depending on the dynamism
 /// of the parameters while calling the macro.
@@ -37,8 +39,10 @@ mod macro_input;
 /// - If path is static, no runtime lookup will be required
 /// - If the path is dynamic, the file structure will be hardcoded.
 ///
-/// - If the language is static, the validation will be reported by `rust-analyzer`.
-/// - If the language is dynamic the validation will be reported in runtime in the `Err` branch.
+/// - If the language is static, the validation will be reported by
+///   `rust-analyzer`.
+/// - If the language is dynamic the validation will be reported in runtime in
+///   the `Err` branch.
 ///
 /// - If both are dynamic a single [`String`] will be generated.
 ///
@@ -48,8 +52,8 @@ mod macro_input;
 /// You can shorten it's invocation if a similar identifier is on scope,
 /// for example `x = x` can be shortened with `x`.
 ///
-/// Replacement parameters are not validated, if a parameter exists it will be replaced
-/// otherwise it won't.
+/// Replacement parameters are not validated, if a parameter exists it will be
+/// replaced otherwise it won't.
 ///
 /// **Returns**
 /// A `Result` containing either:

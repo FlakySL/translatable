@@ -12,19 +12,10 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::parse::{Parse, ParseStream};
 use syn::token::Static;
-use syn::{
-    Expr,
-    ExprLit,
-    Ident,
-    Lit,
-    Path,
-    PathArguments,
-    Result as SynResult,
-    Token,
-};
+use syn::{Expr, ExprLit, Ident, Lit, Path, PathArguments, Result as SynResult, Token};
 use thiserror::Error;
-use translatable_shared::misc::language::Language;
 use translatable_shared::macros::errors::IntoCompileError;
+use translatable_shared::misc::language::Language;
 
 use super::input_type::InputType;
 
