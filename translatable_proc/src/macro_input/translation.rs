@@ -88,7 +88,7 @@ impl Parse for TranslationMacroArgs {
                     Ok(language) => InputType::Static(language),
 
                     Err(_) => Err(TranslationMacroArgsError::InvalidIsoLiteral(literal.value())
-                        .into_syn_error(literal))?,
+                        .to_syn_error(literal))?,
                 }
             },
 
@@ -109,7 +109,7 @@ impl Parse for TranslationMacroArgs {
                             .to_string()),
 
                         other => Err(TranslationMacroArgsError::InvalidPathContainsGenerics
-                            .into_syn_error(other)),
+                            .to_syn_error(other)),
                     })
                     .collect::<Result<Vec<_>, _>>()?;
 
