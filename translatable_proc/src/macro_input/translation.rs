@@ -1,3 +1,11 @@
+//! [`translation!()`] output generation module.
+//!
+//! This module declares a structure that implements
+//! [`Parse`] for it to be used with [`parse_macro_input`]
+//!
+//! [`translation!()`]: crate::translation
+//! [`parse_macro_input`]: syn::parse_macro_input
+
 use std::collections::HashMap;
 
 use proc_macro2::TokenStream as TokenStream2;
@@ -5,7 +13,6 @@ use quote::ToTokens;
 use syn::parse::{Parse, ParseStream};
 use syn::token::Static;
 use syn::{
-    Error as SynError,
     Expr,
     ExprLit,
     Ident,
@@ -17,15 +24,15 @@ use syn::{
 };
 use thiserror::Error;
 use translatable_shared::misc::language::Language;
+use translatable_shared::macros::errors::IntoCompileError;
 
 use super::input_type::InputType;
 
-/// Used to represent errors on parsing a `TranslationMacroArgs`
-/// using `parse_macro_input!`.
+/// Parse error for [`TranslationMacroArgs`].
 ///
-/// The enum implements a helper function to convert itself
-/// to a `syn` spanned error, so this enum isn't directly
-/// exposed as the `syn::Error` instance takes place.
+/// Represents errors that can occur while parsing the [`translation!()`]
+/// macro input. This error is only used while parsing compile-time input,
+/// as runtime input is validated in runtime.
 #[derive(Error, Debug)]
 enum TranslationMacroArgsError {
     /// An error while parsing a compile-time String value
@@ -34,15 +41,23 @@ enum TranslationMacroArgsError {
     InvalidIsoLiteral(String),
 
     /// Extra tokens were found while parsing a static path for
-    /// the `translation!` macro, specifically generic arguments.
+    /// the [`translation!()`] macro, specifically generic arguments.
+    ///
+    /// [`translation!()`]: crate::translation
     #[error("This translation path contains generic arguments, and cannot be parsed")]
     InvalidPathContainsGenerics,
 }
 
-/// The `TranslationMacroArgs` struct is used to represent
-/// the `translation!` macro parsed arguments, it's sole
-/// purpose is to be used with `parse_macro_input!` with the
-/// `Parse` implementation the structure has.
+/// [`translation!()`] macro input arguments.
+///
+/// This structure implements [`Parse`] to parse
+/// [`translation!()`] macro arguments using
+/// [`parse_macro_input`], to later be used
+/// in the [`translation_macro`] function.
+///
+/// [`translation!()`]: crate::translation
+/// [`parse_macro_input`]: syn::parse_macro_input
+/// [`translation_macro`]: crate::macro_generation::translation::translation_macro
 pub struct TranslationMacroArgs {
     /// Represents the user specified language
     /// which may be static if the specified language
@@ -56,7 +71,7 @@ pub struct TranslationMacroArgs {
     /// translation files, this can be static if specified
     /// as `static path::to::translation` or dynamic if
     /// it's another expression, this way represented as a
-    /// `TokenStream`.
+    /// [`TokenStream2`].
     path: InputType<Vec<String>>,
 
     /// Stores the replacement arguments for the translation
@@ -67,15 +82,10 @@ pub struct TranslationMacroArgs {
     replacements: HashMap<Ident, TokenStream2>,
 }
 
-impl TranslationMacroArgsError {
-    pub fn into_syn_error<T: ToTokens>(self, span: T) -> SynError {
-        SynError::new_spanned(span, self.to_string())
-    }
-}
-
-/// The implementation is used to achieve the
-/// sole purpose this structure has, which is being
-/// used in a `parse_macro_input!` call.
+/// [`translation!()`] macro args parsing implementation.
+///
+/// This implementation's purpose is to parse [`TokenStream`]
+/// with the [`parse_macro_input`] macro.
 impl Parse for TranslationMacroArgs {
     fn parse(input: ParseStream) -> SynResult<Self> {
         let parsed_language_arg = match input.parse::<Expr>()? {
@@ -150,18 +160,30 @@ impl Parse for TranslationMacroArgs {
 }
 
 impl TranslationMacroArgs {
+    /// `self.language` reference getter.
+    ///
+    /// **Returns**
+    /// A reference to `self.language` as [`InputType<Language>`].
     #[inline]
     #[allow(unused)]
     pub fn language(&self) -> &InputType<Language> {
         &self.language
     }
 
+    /// `self.path` reference getter.
+    ///
+    /// **Returns**
+    /// A reference to `self.path` as [`InputType<Vec<String>>`]
     #[inline]
     #[allow(unused)]
     pub fn path(&self) -> &InputType<Vec<String>> {
         &self.path
     }
 
+    /// `self.replacements` reference getter.
+    ///
+    /// **Returns**
+    /// A reference to `self.replacements` as [`HashMap<Ident, TokenStream2>`]
     #[inline]
     #[allow(unused)]
     pub fn replacements(&self) -> &HashMap<Ident, TokenStream2> {

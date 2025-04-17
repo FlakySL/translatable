@@ -20,6 +20,7 @@ fn language_static_path_dynamic() {
 fn language_dynamic_path_static() {
     let name = NAME;
     let surname = SURNAME;
+
     let result = translation!(Language::ES, static common::greeting, name, surname);
     assert!(result.unwrap() == RESULT);
 }

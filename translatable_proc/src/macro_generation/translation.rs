@@ -1,8 +1,10 @@
-//! `translation!()` macro output module.
+//! [`translation!()`] macro output module.
 //!
 //! This module contains the required for
 //! the generation of the `translation!()` macro tokens
 //! with intrinsics from `macro_input::translation.rs`.
+//!
+//! [`translation!()`]: crate::translation
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
@@ -17,12 +19,14 @@ use crate::macro_input::translation::TranslationMacroArgs;
 
 /// Macro compile-time translation resolution error.
 ///
-/// Represents errors that can occur while compiling translation macros.
+/// Represents errors that can occur while compiling the [`translation!()`].
 /// This includes cases where a translation path cannot be found or
 /// a language variant is unavailable at the specified path.
 ///
 /// These errors are reported at compile-time by `rust-analyzer`
-/// for immediate feedback while invoking the `translatable!()` macro.
+/// for immediate feedback while invoking the [`translation!()`] macro.
+///
+/// [`translation!()`]: crate::translation
 #[derive(Error, Debug)]
 enum MacroCompileError {
     /// The requested translation path could not be found.
