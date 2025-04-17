@@ -1,11 +1,11 @@
-//! Internationalization library providing compile-time and runtime translation
-//! facilities
+//! Macro declarations for the `translatable` crate.
 //!
-//! # Features
-//! - TOML-based translation files
-//! - ISO 639-1 language validation
-//! - Configurable loading strategies
-//! - Procedural macro for compile-time checking
+//! This crate shouldn't be used by itself,
+//! since the macros generate code with the context
+//! of the `translatable` library.
+//!
+//! The `translatable` library re-exports the macros
+//! declared in this crate.
 
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
@@ -17,16 +17,44 @@ mod data;
 mod macro_generation;
 mod macro_input;
 
-/// Procedural macro for compile-time translation validation
+/// **translation obtention macro.**
 ///
-/// # Usage
-/// ```ignore
-/// translation!("en", static some::path)
-/// ```
+/// This macro generates the way to obtain a translation
+/// from the translation files in the directory defined
+/// in the `translatable.toml` file.
 ///
-/// # Parameters
-/// - Language code/literal
-/// - Translation path (supports static analysis)
+/// **Parameters**
+/// * `language` - A string literal for static inference or an instance of
+/// `translatable::Language` for dynamic inference.
+/// * `path` - A pat prefixed with `static` for static inference or a `Vec<impl ToString>`
+/// for dynamic inference.
+/// * `replacements` - Arguments similar to python's `kwargs` for the translation replacements.
+///
+/// This macro provides optimizations depending on the dynamism
+/// of the parameters while calling the macro.
+///
+/// The optimizations are described the following way
+/// - If path is static, no runtime lookup will be required
+/// - If the path is dynamic, the file structure will be hardcoded.
+///
+/// - If the language is static, the validation will be reported by `rust-analyzer`.
+/// - If the language is dynamic the validation will be reported in runtime in the `Err` branch.
+///
+/// - If both are dynamic a single [`String`] will be generated.
+///
+/// Independently of any other parameter, the `replacements` parameter
+/// is always dynamic (context based).
+///
+/// You can shorten it's invocation if a similar identifier is on scope,
+/// for example `x = x` can be shortened with `x`.
+///
+/// Replacement parameters are not validated, if a parameter exists it will be replaced
+/// otherwise it won't.
+///
+/// **Returns**
+/// A `Result` containing either:
+/// * `Ok(String)` - If the invocation is successful.
+/// * `Err(translatable::Error)` - If the invocation fails with a runtime error.
 #[proc_macro]
 pub fn translation(input: TokenStream) -> TokenStream {
     translation_macro(parse_macro_input!(input as TranslationMacroArgs).into()).into()
