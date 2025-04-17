@@ -1,3 +1,9 @@
+//! `translation!()` macro output module.
+//!
+//! This module contains the required for
+//! the generation of the `translation!()` macro tokens
+//! with intrinsics from `macro_input::translation.rs`.
+
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
 use thiserror::Error;
@@ -9,15 +15,52 @@ use crate::data::translations::load_translations;
 use crate::macro_input::input_type::InputType;
 use crate::macro_input::translation::TranslationMacroArgs;
 
+/// Macro compile-time translation resolution error.
+///
+/// Represents errors that can occur while compiling translation macros.
+/// This includes cases where a translation path cannot be found or
+/// a language variant is unavailable at the specified path.
+///
+/// These errors are reported at compile-time by `rust-analyzer`
+/// for immediate feedback while invoking the `translatable!()` macro.
 #[derive(Error, Debug)]
 enum MacroCompileError {
+    /// The requested translation path could not be found.
+    ///
+    /// **Parameters**
+    /// * `0` — The translation path, displayed in `::` notation.
     #[error("The path '{0}' could not be found")]
     PathNotFound(String),
 
+    /// The requested language is not available for the provided translation path.
+    ///
+    /// **Parameters**
+    /// * `0` — The requested `Language`.
+    /// * `1` — The translation path where the language was expected.
     #[error("The language '{0:?}' ('{0:#}') is not available for the path '{1}'")]
     LanguageNotAvailable(Language, String),
 }
 
+/// `translation!()` macro output generation.
+///
+/// Expands into code that resolves a translation string based on the input
+/// language and translation path, performing placeholder substitutions
+/// if applicable.
+///
+/// If the language and path are fully static, the translation will be resolved
+/// during macro expansion. Otherwise, the generated code will include runtime
+/// resolution logic.
+///
+/// If the path or language is invalid at compile time, an appropriate
+/// `MacroCompileError` will be reported.
+///
+/// **Arguments**
+/// * `input` — Structured arguments defining the translation path, language,
+/// and any placeholder replacements obtained from `macro_input::translation`.
+///
+/// **Returns**
+/// Generated `TokenStream2` representing the resolved translation string or
+/// runtime lookup logic.
 pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
     let translations = handle_macro_result!(load_translations());
 

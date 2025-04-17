@@ -16,7 +16,7 @@ use toml::de::Error as TomlError;
 
 /// Configuration error enum.
 ///
-/// Used for compile time configuration
+/// Used for compile-time configuration
 /// errors, such as errors while opening
 /// files or parsing a file format.
 ///

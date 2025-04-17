@@ -12,7 +12,7 @@ use translatable_shared::translations::node::TranslationNodeError;
 /// Macro runtime error handling.
 ///
 /// Used in `translation!(...)` invocations for non
-/// compile time validations and errors.
+/// compile-time validations and errors.
 ///
 /// Use the `Display` implementation to obtain the
 /// error message, `self.cause()` is available as
