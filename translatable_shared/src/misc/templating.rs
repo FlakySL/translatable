@@ -1,3 +1,10 @@
+//! String template generation module.
+//!
+//! This module declares the [`FormatString`]
+//! which is a structure to parse templates
+//! and generate strings of them with replaced
+//! parameters.
+
 use std::collections::HashMap;
 use std::ops::Range;
 use std::str::FromStr;
@@ -9,18 +16,57 @@ use thiserror::Error;
 
 use crate::macros::collections::map_transform_to_tokens;
 
+/// Template parsing errors.
+///
+/// This error is used within [`FormatString`]
+/// to represent parsing errors such as unclosed
+/// unescaped tags or invalid identifiers.
 #[derive(Error, Debug)]
 pub enum TemplateError {
-    // Runtime errors
+    /// Unclosed brace error.
+    ///
+    /// This error is returned when a brace
+    /// that was considered unescaped
+    /// was not closed after reaching the
+    /// last character of the string.
     #[error("Found unclosed brace at index {0}")]
     Unclosed(usize),
 
+    /// Invalid ident error.
+    ///
+    /// This error is returned when a key
+    /// inside the braces couldn't be parsed
+    /// as an [`Ident`], invalid identifiers
+    /// are checked because of macro parsing.
     #[error("Found template with key '{0}' which is an invalid identifier")]
     InvalidIdent(String),
 }
 
+/// Format string wrapper struct.
+///
+/// This struct wraps a string and has
+/// a counter of each template it has
+/// with each respective position for
+/// the sake of replacing these positions
+/// with read data.
 pub struct FormatString {
+    /// Original templated string.
+    ///
+    /// This field contains the original
+    /// string that aligns it's keyed templates
+    /// with `self.spans`.
+    ///
+    /// This should never be mutated for the sake
+    /// of keping the alignment with `self.spans`.
     original: String,
+
+    /// Template spans.
+    ///
+    /// This hashmap contains the ranges
+    /// of the templates found in the
+    /// original string, for the sake
+    /// of replacing them in a copy
+    /// of the original string.
     spans: HashMap<String, Range<usize>>,
 }
 
