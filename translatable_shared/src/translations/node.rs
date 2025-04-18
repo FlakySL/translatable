@@ -1,3 +1,10 @@
+//! Translation node declaration module.
+//!
+//! This module declares [`TranslationNode`] which
+//! is a nested enum that behaves like a n-ary tree
+//! for which each branch contains paths that might
+//! lead to translation objects or other paths.
+
 use std::collections::HashMap;
 
 use proc_macro2::TokenStream as TokenStream2;
@@ -10,46 +17,90 @@ use crate::macros::collections::{map_to_tokens, map_transform_to_tokens};
 use crate::misc::language::Language;
 use crate::misc::templating::{FormatString, TemplateError};
 
-/// Errors occurring during TOML-to-translation structure transformation
+/// [`TranslationNode`] errors.
+///
+/// This error is agnostic to the runtime, it is used
+/// for errors while parsing a [`TranslationNode`] or
+/// while trying seeking for it's content.
 #[derive(Error, Debug)]
 pub enum TranslationNodeError {
-    /// Mixed content found in nesting node (strings and objects cannot coexist)
+    // We need to possibly solve the ambiguity between
+    // InvalidNesting and InvalidValue.
+
+    /// Invalid object type error.
+    ///
+    /// This error signals that the nesting rules were
+    /// broken, thus the parsing cannot continue.
     #[error("A nesting can contain either strings or other nestings, but not both.")]
     InvalidNesting,
 
-    /// Template syntax error with unbalanced braces
-    #[error("Tempalte validation failed: {0:#}")]
-    UnclosedTemplate(#[from] TemplateError),
+    /// Template validation error.
+    ///
+    /// This means there was an error while validating
+    /// a translation templates, such as an invalid
+    /// ident for its keys or unclosed templates.
+    #[error("Template validation failed: {0:#}")]
+    TemplateValidation(#[from] TemplateError),
 
-    /// Invalid value type encountered in translation structure
+    /// Invalid value found inside a nesting.
+    ///
+    /// This error signals that an invalid value was found
+    /// inside a nesting.
     #[error("Only strings and objects are allowed for nested objects.")]
     InvalidValue,
 
-    /// Failed to parse language code from translation key
+    /// Invalid ISO-639-1 translation key.
+    ///
+    /// This error signals that an invalid key was found for a
+    /// translation inside a translation object.
+    ///
+    /// Translation keys must follow the ISO-639-1 standard.
     #[error("Couldn't parse ISO 639-1 string for translation key")]
     LanguageParsing(#[from] ParseError),
 }
 
+/// Nesting type alias.
+///
+/// This is one of the valid objects that might be found
+/// on a translation file, this object might contain a translation
+/// or another nesting.
 pub type TranslationNesting = HashMap<String, TranslationNode>;
+
+/// Object type alias.
+///
+/// This is one of the valid objects that might be found
+/// on a translation file, this object contains only translations
+/// keyed with their respective languages.
 pub type TranslationObject = HashMap<Language, FormatString>;
 
-/// Represents nested translation structure,
-/// as it is on the translation files.
+/// Translation node structure.
+///
+/// This enum acts like an n-ary tree which
+/// may contain [`TranslationNesting`] or
+/// [`TranslationObject`] representing a tree
+/// that follows the translation file rules.
 pub enum TranslationNode {
-    /// Nested namespace containing other translation objects
+    /// Branch containing a [`TranslationNesting`].
+    ///
+    /// Read the [`TranslationNesting`] documentation for
+    /// more information.
     Nesting(TranslationNesting),
-    /// Leaf node containing actual translations per language
+
+    /// Branch containing a [`TranslationObject`].
+    ///
+    /// Read the [`TranslationObject`] documentation for
+    /// more information.
     Translation(TranslationObject),
 }
 
 impl TranslationNode {
-    /// Resolves a translation path through the nesting hierarchy
+    /// Resolves a translation path through the nesting hierarchy.
     ///
-    /// # Arguments
-    /// * `path` - Slice of path segments to resolve
+    /// **Arguments**
+    /// * `path` - Slice of path segments to resolve.
     ///
-    /// # Returns
-    /// Reference to translations if path exists and points to leaf node
+    /// **Returns**
+    /// A reference to translations if path exists and points to leaf node.
     pub fn find_path<I: ToString>(&self, path: &Vec<I>) -> Option<&TranslationObject> {
         let path = path
             .iter()
@@ -70,11 +121,13 @@ impl TranslationNode {
     }
 }
 
-/// This implementation converts the tagged union
-/// to an equivalent call from the runtime context.
+/// Compile-time to runtime conversion implementation.
 ///
-/// This is exclusively meant to be used from the
-/// macro generation context.
+/// This implementation converts a [`TranslationNode`] into
+/// runtime trough tokens by nesting calls depending on the
+/// type inferred in compile-time.
+///
+/// This is usually used for dynamic paths.
 impl ToTokens for TranslationNode {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         match self {
@@ -104,19 +157,20 @@ impl ToTokens for TranslationNode {
     }
 }
 
-/// This implementation converts a `toml::Table` into a manageable
-/// NestingType.
+/// TOML table parsing.
+///
+/// This implementation parses a TOML table object
+/// into a [`TranslationNode`] for validation and
+/// seeking the translations acording to the rules.
 impl TryFrom<Table> for TranslationNode {
     type Error = TranslationNodeError;
 
-    /// Converts TOML table to validated translation structure
     fn try_from(value: Table) -> Result<Self, Self::Error> {
         let mut result = None;
 
         for (key, value) in value {
             match value {
                 Value::String(translation_value) => {
-                    // Initialize result if first entry
                     let result = result.get_or_insert_with(|| Self::Translation(HashMap::new()));
 
                     match result {
