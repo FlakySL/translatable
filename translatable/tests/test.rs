@@ -2,7 +2,7 @@ use translatable::{Language, translation};
 
 const NAME: &str = "John";
 const SURNAME: &str = "Doe";
-const RESULT: &str = "¡Hola John Doe!";
+const RESULT: &str = "¡Hola John Doe! Mi nombre es John Doe {{hola}}";
 
 #[test]
 fn both_static() {

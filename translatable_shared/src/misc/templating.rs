@@ -67,11 +67,11 @@ pub struct FormatString {
     /// original string, for the sake
     /// of replacing them in a copy
     /// of the original string.
-    spans: HashMap<String, Range<usize>>,
+    spans: Vec<(String, Range<usize>)>,
 }
 
 impl FormatString {
-    pub fn from_data(original: &str, spans: HashMap<String, Range<usize>>) -> Self {
+    pub fn from_data(original: &str, spans: Vec<(String, Range<usize>)>) -> Self {
         Self { original: original.to_string(), spans }
     }
 
@@ -79,11 +79,8 @@ impl FormatString {
         let mut original = self
             .original
             .clone();
-        let mut spans = self
-            .spans
-            .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect::<Vec<(String, Range<usize>)>>();
+
+        let mut spans = self.spans.clone();
         spans.sort_by_key(|(_key, range)| range.start);
 
         let mut offset = 0isize;
@@ -108,7 +105,7 @@ impl FromStr for FormatString {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let original = s.to_string();
-        let mut spans = HashMap::new();
+        let mut spans = Vec::new();
 
         let char_to_byte = s
             .char_indices()
@@ -134,12 +131,12 @@ impl FromStr for FormatString {
                 ('}', Some(open_idx)) => {
                     let key = current_tmpl_key.clone();
 
-                    spans.insert(
+                    spans.push((
                         parse_str::<Ident>(&key)
                             .map_err(|_| TemplateError::InvalidIdent(key))?
                             .to_string(),
                         char_to_byte[open_idx]..char_to_byte[char_idx + 1], // inclusive
-                    );
+                    ));
 
                     last_bracket_idx = None;
                     current_tmpl_key.clear();
@@ -163,17 +160,20 @@ impl ToTokens for FormatString {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let original = &self.original;
 
-        let span_map = map_transform_to_tokens(&self.spans, |key, range| {
-            let range_start = range.start;
-            let range_end = range.end;
+        let span_map = self
+            .spans
+            .iter()
+            .map(|(key, range)| {
+                let start = range.start;
+                let end = range.end;
 
-            quote! { (#key.to_string(), #range_start..#range_end) }
-        });
+                quote! { (#key.to_string(), #start..#end) }
+            });
 
         tokens.append_all(quote! {
             translatable::shared::misc::templating::FormatString::from_data(
                 #original,
-                #span_map
+                vec![#(#span_map),*]
             )
         });
     }
