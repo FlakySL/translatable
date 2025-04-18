@@ -14,8 +14,6 @@ use quote::{ToTokens, TokenStreamExt, quote};
 use syn::{Ident, parse_str};
 use thiserror::Error;
 
-use crate::macros::collections::map_transform_to_tokens;
-
 /// Template parsing errors.
 ///
 /// This error is used within [`FormatString`]
@@ -62,19 +60,50 @@ pub struct FormatString {
 
     /// Template spans.
     ///
-    /// This hashmap contains the ranges
-    /// of the templates found in the
-    /// original string, for the sake
-    /// of replacing them in a copy
-    /// of the original string.
+    /// This vector contains the spans
+    /// of all the ranges containing a template
+    /// in the original string.
+    ///
+    /// This is stored in a vector because we
+    /// want to allow multiple templates with
+    /// the same key.
     spans: Vec<(String, Range<usize>)>,
 }
 
 impl FormatString {
+    /// Compile-time to runtime transformation function.
+    ///
+    /// This function takes data that may be generated
+    /// from a macro output and constructs an instance
+    /// of [`FormatString`] keeping it's fields
+    /// private an inmutable.
+    ///
+    /// If you use this to construct the instance manually
+    /// there is no promise that the string and spans
+    /// are aligned, thus the replacements are going
+    /// to work.
+    ///
+    /// **Parameters**
+    /// * `original` - What belongs to the `original` field.
+    /// * `spans` - What belongs to the `spans` field.
+    ///
+    /// **Returns**
+    /// An instance of self based on the provided parameters.
     pub fn from_data(original: &str, spans: Vec<(String, Range<usize>)>) -> Self {
         Self { original: original.to_string(), spans }
     }
 
+    /// Creates replaced original string copy.
+    ///
+    /// This method takes the original string, and replaces
+    /// it's templates with the values of the values provided
+    /// as a hashmap.
+    ///
+    /// **Parameters**
+    /// * `values` - The values to replace the templates with.
+    ///
+    /// **Returns**
+    /// A copy of the original string with it's templates replaced.
     pub fn replace_with(&self, values: HashMap<String, String>) -> String {
         let mut original = self
             .original
@@ -100,6 +129,13 @@ impl FormatString {
     }
 }
 
+/// Parse method implementation.
+///
+/// This implementation leads to the implementation
+/// of the `parse` method for [`FormatString`] which
+/// parses all the templates on the string and stores
+/// them in a structure along the original string for
+/// future replacement.
 impl FromStr for FormatString {
     type Err = TemplateError;
 
@@ -156,6 +192,12 @@ impl FromStr for FormatString {
     }
 }
 
+/// Compile-time to runtime conversion implementation.
+///
+/// This implementation generates a call to the [`from_data`]
+/// function in [`FormatString`].
+///
+/// [`from_data`]: FormatString::from_data
 impl ToTokens for FormatString {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let original = &self.original;

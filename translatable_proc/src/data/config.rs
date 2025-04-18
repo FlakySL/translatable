@@ -153,7 +153,8 @@ pub struct MacroConfig {
 impl MacroConfig {
     /// Get reference to the configured locales path.
     ///
-    /// Returns the path to the directory where translation files are expected
+    /// **Returns**
+    /// The path to the directory where translation files are expected
     /// to be located.
     pub fn path(&self) -> &str {
         &self.path
@@ -161,7 +162,8 @@ impl MacroConfig {
 
     /// Get the current seek mode strategy.
     ///
-    /// Returns the configured strategy used to determine the order in which
+    /// **Returns**
+    /// The configured strategy used to determine the order in which
     /// translation files are processed.
     pub fn seek_mode(&self) -> SeekMode {
         self.seek_mode
@@ -169,7 +171,8 @@ impl MacroConfig {
 
     /// Get the current overlap resolution strategy.
     ///
-    /// Returns the configured strategy for resolving translation conflicts
+    /// **Returns**
+    /// The configured strategy for resolving translation conflicts
     /// when multiple files define the same key.
     pub fn overlap(&self) -> TranslationOverlap {
         self.overlap
