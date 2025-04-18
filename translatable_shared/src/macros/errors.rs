@@ -29,6 +29,7 @@ where
     ///
     /// **Returns**
     /// A [`compile_error!`] wrapped `&str`.
+    #[cold]
     fn to_compile_error(&self) -> TokenStream2 {
         let message = self.to_string();
         quote! { std::compile_error!(#message) }
@@ -45,6 +46,7 @@ where
     ///
     /// **Returns**
     /// A [`SynError`] with the value as a message and the provided `span`.
+    #[cold]
     fn to_syn_error<T: ToTokens>(&self, span: T) -> SynError {
         SynError::new_spanned(span, self.to_string())
     }
