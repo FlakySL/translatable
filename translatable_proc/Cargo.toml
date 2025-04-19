@@ -1,10 +1,10 @@
 [package]
 name = "translatable_proc"
 description = "Proc macro crate for the translatable library."
-repository = "https://github.com/FlakySL/translatable.rs"
+repository = "https://github.com/FlakySL/translatable"
 license = "MIT OR Apache-2.0"
 readme = "../README-MACROS.md"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 authors = ["Esteve Autet <esteve@memw.es>", "Chiko <chiko@envs.net>"]
 
@@ -18,3 +18,4 @@ strum = { version = "0.27.1", features = ["derive"] }
 syn = { version = "2.0.98", features = ["full"] }
 thiserror = "2.0.11"
 toml = "0.8.20"
+translatable_shared = { version = "1", path = "../translatable_shared/" }

@@ -1,79 +1,164 @@
-use std::collections::HashMap;
+//! Translation obtention module.
+//!
+//! This module is used to obtain
+//! translations from their respective files.
+//!
+//! This module uses `crate::data::config` to
+//! to load the translations and order them
+//! based on the configuration provided
+//! by the module.
+
 use std::fs::{read_dir, read_to_string};
+use std::io::Error as IoError;
 use std::sync::OnceLock;
 
-use proc_macro2::{Span, TokenStream};
-use quote::quote;
-use strum::ParseError;
-use syn::LitStr;
 use thiserror::Error;
-use toml::{Table, Value};
+use toml::Table;
+use toml::de::Error as TomlError;
+use translatable_shared::translations::collection::TranslationNodeCollection;
+use translatable_shared::translations::node::{TranslationNode, TranslationNodeError};
 
-use super::config::{SeekMode, TranslationOverlap, load_config};
-use crate::languages::Iso639a;
-use crate::translations::errors::TranslationError;
+use super::config::{ConfigError, SeekMode, TranslationOverlap, load_config};
 
-/// Errors occurring during TOML-to-translation structure transformation
+/// Translation retrieval error enum.
+///
+/// Represents errors that can occur during compile-time translation
+/// retrieval. This includes I/O issues, configuration loading failures,
+/// TOML deserialization errors, and translation node parsing errors.
+///
+/// The errors from this enum are directly surfaced in `rust-analyzer`
+/// to assist with early detection and debugging.
 #[derive(Error, Debug)]
-pub enum TransformError {
-    /// Mixed content found in nesting node (strings and objects cannot coexist)
-    #[error("A nesting can contain either strings or other nestings, but not both.")]
-    InvalidNesting,
+pub enum TranslationDataError {
+    /// I/O error derivation.
+    ///
+    /// Raised when an I/O operation fails during translation
+    /// retrieval, typically caused by filesystem-level issues.
+    ///
+    /// [`Display`] will forward the inner [`std::io::Error`]
+    /// representation prefixed with additional context.
+    ///
+    /// The enum implements [`From<std::io::Error>`] to allow
+    /// automatic conversion from `IoError`.
+    ///
+    /// **Parameters**
+    /// * `0` — The underlying I/O error.
+    ///
+    /// [`From<std::io::Error>`]: std::io::Error
+    /// [`Display`]: std::fmt::Display
+    #[error("There was a problem with an IO operation: {0:#}")]
+    Io(#[from] IoError),
 
-    /// Template syntax error with unbalanced braces
-    #[error("Templates in translations should match '{{' and '}}'")]
-    UnclosedTemplate,
+    /// Configuration loading failure.
+    ///
+    /// Raised when the translation configuration cannot be loaded
+    /// successfully, typically due to invalid values or missing
+    /// configuration data.
+    ///
+    /// [`Display`] will forward the inner [`ConfigError`] message.
+    ///
+    /// The enum implements [`From<ConfigError>`] to allow automatic
+    /// conversion from the underlying error.
+    ///
+    /// **Parameters**
+    /// * `0` — The configuration error encountered.
+    ///
+    /// [`Display`]: std::fmt::Display
+    #[error("{0:#}")]
+    LoadConfig(#[from] ConfigError),
 
-    /// Invalid value type encountered in translation structure
-    #[error("Only strings and objects are allowed for nested objects.")]
-    InvalidValue,
+    /// Invalid Unicode path.
+    ///
+    /// Raised when a filesystem path cannot be processed due to
+    /// invalid Unicode characters.
+    ///
+    /// This error signals that the translation system cannot proceed
+    /// with a non-Unicode-compatible path.
+    #[error("Couldn't open path, found invalid unicode characters")]
+    InvalidUnicode,
 
-    /// Failed to parse language code from translation key
-    #[error("Couldn't parse ISO 639-1 string for translation key")]
-    LanguageParsing(#[from] ParseError),
+    /// TOML deserialization failure.
+    ///
+    /// Raised when the contents of a translation file cannot be
+    /// parsed as valid TOML data.
+    ///
+    /// The formatted error message includes the deserialization reason,
+    /// the location within the file (if available), and the file path.
+    ///
+    /// **Parameters**
+    /// * `0` — The [`toml::de::Error`] carrying the underlying deserialization
+    ///   error.
+    /// * `1` — The file path of the TOML file being parsed.
+    #[error(
+        "TOML Deserialization error '{reason}' {span} in {1}",
+        reason = _0.message(),
+        span = _0
+            .span()
+            .map(|range| format!("on {}:{}", range.start, range.end))
+            .unwrap_or_else(String::new)
+    )]
+    ParseToml(TomlError, String),
+
+    /// Translation node parsing failure.
+    ///
+    /// Raised when the translation system cannot correctly parse
+    /// a translation node, typically due to invalid formatting
+    /// or missing expected data.
+    ///
+    /// The enum implements [`From<TranslationNodeError>`] for
+    /// seamless conversion.
+    ///
+    /// **Parameters**
+    /// * `0` — The translation node error encountered.
+    #[error("{0:#}")]
+    Node(#[from] TranslationNodeError),
 }
 
-/// Represents hierarchical translation structure
-#[derive(Clone)]
-pub enum NestingType {
-    /// Nested namespace containing other translation objects
-    Object(HashMap<String, NestingType>),
-    /// Leaf node containing actual translations per language
-    Translation(HashMap<Iso639a, String>),
-}
-
-/// Translation association with its source file
-pub struct AssociatedTranslation {
-    /// Original file path of the translation
-    original_path: String,
-    /// Hierarchical translation data
-    translation_table: NestingType,
-}
-
-/// Global thread-safe cache for loaded translations
-static TRANSLATIONS: OnceLock<Vec<AssociatedTranslation>> = OnceLock::new();
-
-/// Recursively walks directory to find all translation files
+/// Global thread-safe cache for loaded translations.
 ///
-/// # Arguments
-/// * `path` - Root directory to scan
+/// Stores all parsed translations in memory after the first
+/// successful load. Uses [`OnceLock`] to ensure that the translation
+/// data is initialized only once in a thread-safe manner.
+static TRANSLATIONS: OnceLock<TranslationNodeCollection> = OnceLock::new();
+
+/// Recursively walks the target directory to discover all translation files.
 ///
-/// # Returns
-/// Vec of file paths or TranslationError
-fn walk_dir(path: &str) -> Result<Vec<String>, TranslationError> {
+/// Uses an iterative traversal strategy to avoid recursion depth limitations.
+/// Paths are returned as [`String`] values, ready for processing.
+///
+/// Any filesystem errors, invalid paths, or read failures are reported
+/// via `TranslationDataError`.
+///
+/// **Arguments**
+/// * `path` — Root directory to scan for translation files.
+///
+/// **Returns**
+/// A `Result` containing either:
+/// * [`Ok(Vec<String>)`] — A flat list of discovered file paths.
+/// * [`Err(TranslationDataError)`] — If traversal fails at any point.
+///
+/// [`Ok(Vec<String>)`]: std::vec::Vec<String>
+/// [`Err(TranslationDataError)`]: TranslationDataError
+fn walk_dir(path: &str) -> Result<Vec<String>, TranslationDataError> {
     let mut stack = vec![path.to_string()];
     let mut result = Vec::new();
 
-    // Use iterative approach to avoid recursion depth limits
     while let Some(current_path) = stack.pop() {
         let directory = read_dir(&current_path)?.collect::<Result<Vec<_>, _>>()?;
 
         for entry in directory {
             let path = entry.path();
             if path.is_dir() {
-                stack.push(path.to_str().ok_or(TranslationError::InvalidUnicode)?.to_string());
+                stack.push(
+                    path.to_str()
+                        .ok_or(TranslationDataError::InvalidUnicode)?
+                        .to_string(),
+                );
             } else {
-                result.push(path.to_string_lossy().to_string());
+                result.push(
+                    path.to_string_lossy()
+                        .to_string(),
+                );
             }
         }
     }
@@ -81,31 +166,30 @@ fn walk_dir(path: &str) -> Result<Vec<String>, TranslationError> {
     Ok(result)
 }
 
-/// Validates template brace balancing in translation strings
-fn templates_valid(translation: &str) -> bool {
-    let mut nestings = 0;
-
-    for character in translation.chars() {
-        match character {
-            '{' => nestings += 1,
-            '}' => nestings -= 1,
-            _ => {},
-        }
-    }
-
-    nestings == 0
-}
-
-/// Loads and caches translations from configured directory
+/// Loads and caches translations from the configured directory.
 ///
-/// # Returns
-/// Reference to cached translations or TranslationError
+/// On the first invocation, this function:
+/// - Reads the translation directory path from the loaded configuration.
+/// - Recursively walks the directory to discover all translation files.
+/// - Sorts the file list according to the configured `seek_mode`.
+/// - Parses each file and validates its content.
 ///
-/// # Implementation Details
-/// - Uses OnceLock for thread-safe initialization
-/// - Applies sorting based on configuration
-/// - Handles file parsing and validation
-pub fn load_translations() -> Result<&'static Vec<AssociatedTranslation>, TranslationError> {
+/// Once successfully loaded, the parsed translations are stored
+/// in a global [`OnceLock`]-backed cache and reused for the lifetime
+/// of the process.
+///
+/// This function will return a reference to the cached translations
+/// on every subsequent call.
+///
+/// **Returns**
+/// A [`Result`] containing either:
+/// * [`Ok(&TranslationNodeCollection)`] — The parsed and cached translations.
+/// * [`Err(TranslationDataError)`] — An error because any of the translation
+///   files couldn't be read.
+///
+/// [`Ok(&TranslationNodeCollection)`]: TranslationNodeCollection
+/// [`Err(TranslationDataError)`]: TranslationDataError
+pub fn load_translations() -> Result<&'static TranslationNodeCollection, TranslationDataError> {
     if let Some(translations) = TRANSLATIONS.get() {
         return Ok(translations);
     }
@@ -115,137 +199,22 @@ pub fn load_translations() -> Result<&'static Vec<AssociatedTranslation>, Transl
 
     // Apply sorting based on configuration
     translation_paths.sort_by_key(|path| path.to_lowercase());
-    if let SeekMode::Unalphabetical = config.seek_mode() {
+    if matches!(config.seek_mode(), SeekMode::Unalphabetical)
+        || matches!(config.overlap(), TranslationOverlap::Overwrite)
+    {
         translation_paths.reverse();
     }
 
-    let mut translations = translation_paths
+    let translations = translation_paths
         .iter()
         .map(|path| {
             let table = read_to_string(path)?
                 .parse::<Table>()
-                .map_err(|err| TranslationError::ParseToml(err, path.clone()))?;
+                .map_err(|err| TranslationDataError::ParseToml(err, path.clone()))?;
 
-            Ok(AssociatedTranslation {
-                original_path: path.to_string(),
-                translation_table: NestingType::try_from(table)
-                    .map_err(|err| TranslationError::InvalidTomlFormat(err, path.to_string()))?,
-            })
+            Ok((path.clone(), TranslationNode::try_from(table)?))
         })
-        .collect::<Result<Vec<_>, TranslationError>>()?;
-
-    // Handle translation overlap configuration
-    if let TranslationOverlap::Overwrite = config.overlap() {
-        translations.reverse();
-    }
+        .collect::<Result<TranslationNodeCollection, TranslationDataError>>()?;
 
     Ok(TRANSLATIONS.get_or_init(|| translations))
-}
-
-impl NestingType {
-    /// Resolves a translation path through the nesting hierarchy
-    ///
-    /// # Arguments
-    /// * `path` - Slice of path segments to resolve
-    ///
-    /// # Returns
-    /// Reference to translations if path exists and points to leaf node
-    pub fn get_path(&self, path: Vec<&str>) -> Option<&HashMap<Iso639a, String>> {
-        match self {
-            Self::Object(nested) => {
-                let (first, rest) = path.split_first()?;
-                nested.get(*first)?.get_path(rest.to_vec())
-            },
-            Self::Translation(translation) => path.is_empty().then_some(translation),
-        }
-    }
-}
-
-impl From<NestingType> for TokenStream {
-    /// Converts NestingType to procedural macro output tokens
-    fn from(val: NestingType) -> Self {
-        match val {
-            NestingType::Object(nesting) => {
-                let entries = nesting.into_iter().map(|(key, value)| -> TokenStream {
-                    let key = LitStr::new(&key, Span::call_site());
-                    let value: TokenStream = value.into();
-                    quote! { (#key.to_string(), #value) }
-                });
-
-                quote! {
-                    translatable::internal::NestingType::Object(vec![#(#entries),*].into_iter().collect())
-                }
-            },
-
-            NestingType::Translation(translation) => {
-                let entries = translation.into_iter().map(|(lang, value)| {
-                    let lang = LitStr::new(&format!("{lang:?}").to_lowercase(), Span::call_site());
-                    let value = LitStr::new(&value, Span::call_site());
-
-                    quote! { (#lang.to_string(), #value.to_string()) }
-                });
-
-                quote! {
-                    translatable::internal::NestingType::Translation(vec![#(#entries),*].into_iter().collect())
-                }
-            },
-        }
-    }
-}
-
-impl TryFrom<Table> for NestingType {
-    type Error = TransformError;
-
-    /// Converts TOML table to validated translation structure
-    fn try_from(value: Table) -> Result<Self, Self::Error> {
-        let mut result = None;
-
-        for (key, value) in value {
-            match value {
-                Value::String(translation_value) => {
-                    // Initialize result if first entry
-                    let result = result.get_or_insert_with(|| Self::Translation(HashMap::new()));
-
-                    match result {
-                        Self::Translation(translation) => {
-                            if !templates_valid(&translation_value) {
-                                return Err(TransformError::UnclosedTemplate);
-                            }
-                            translation.insert(key.parse()?, translation_value);
-                        },
-                        Self::Object(_) => return Err(TransformError::InvalidNesting),
-                    }
-                },
-
-                Value::Table(nesting_value) => {
-                    let result = result.get_or_insert_with(|| Self::Object(HashMap::new()));
-
-                    match result {
-                        Self::Object(nesting) => {
-                            nesting.insert(key, Self::try_from(nesting_value)?);
-                        },
-                        Self::Translation(_) => return Err(TransformError::InvalidNesting),
-                    }
-                },
-
-                _ => return Err(TransformError::InvalidValue),
-            }
-        }
-
-        result.ok_or(TransformError::InvalidValue)
-    }
-}
-
-impl AssociatedTranslation {
-    /// Gets the original file path of the translation
-    #[allow(unused)]
-    pub fn original_path(&self) -> &str {
-        &self.original_path
-    }
-
-    /// Gets reference to the translation data structure
-    #[allow(unused)]
-    pub fn translation_table(&self) -> &NestingType {
-        &self.translation_table
-    }
 }

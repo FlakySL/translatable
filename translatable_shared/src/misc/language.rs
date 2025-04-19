@@ -1,4 +1,26 @@
-use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
+//! [`Language`] declaration module.
+//!
+//! This module declares all the implementations
+//! required for parsing and validating ISO-639-1
+//! language strings from user input.
+
+use proc_macro2::{Span, TokenStream as TokenStream2};
+use quote::{ToTokens, TokenStreamExt, quote};
+use strum::{Display, EnumIter, EnumString};
+use syn::Ident;
+
+/// This implementation converts the tagged union
+/// to an equivalent call from the runtime context.
+///
+/// This is exclusively meant to be used from the
+/// macro generation context.
+impl ToTokens for Language {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let ident = Ident::new(&format!("{self:?}"), Span::call_site());
+
+        tokens.append_all(quote! { translatable::shared::misc::language::Language::#ident })
+    }
+}
 
 /// ISO 639-1 language code implementation with validation
 ///
@@ -8,7 +30,7 @@ use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 /// - Complete ISO 639-1 coverage
 #[derive(Debug, Clone, EnumIter, Display, EnumString, Eq, Hash, PartialEq)]
 #[strum(ascii_case_insensitive)]
-pub enum Iso639a {
+pub enum Language {
     #[strum(serialize = "Abkhazian", serialize = "ab")]
     AB,
     #[strum(serialize = "Afar", serialize = "aa")]
@@ -375,52 +397,4 @@ pub enum Iso639a {
     ZA,
     #[strum(serialize = "Zulu", serialize = "zu")]
     ZU,
-}
-
-/// This struct represents a list of similar languages to the provided one.
-pub struct Similarities<T: Sized> {
-    /// Indicates how many languages are not included in the list.
-    overflow_by: usize,
-    /// List of similar languages.
-    similarities: Vec<T>,
-}
-
-impl<T: Sized> Similarities<T> {
-    pub fn overflow_by(&self) -> usize {
-        self.overflow_by
-    }
-
-    pub fn similarities(&self) -> &[T] {
-        &self.similarities
-    }
-}
-
-impl Iso639a {
-    /// This method returns a list of similar languages to the provided one.
-    pub fn get_similarities(lang: &str, max_amount: usize) -> Similarities<String> {
-        let all_similarities = Self::iter()
-            .map(|variant| format!("{variant:#} ({variant:?})"))
-            .filter(|variant| variant.contains(lang))
-            .collect::<Vec<_>>();
-
-        let overflow_by = all_similarities.len() as i32 - max_amount as i32;
-
-        if overflow_by > 0 {
-            Similarities {
-                similarities: all_similarities.into_iter().take(max_amount).collect(),
-                overflow_by: overflow_by as usize,
-            }
-        } else {
-            Similarities {
-                similarities: all_similarities,
-                overflow_by: 0,
-            }
-        }
-    }
-}
-
-impl PartialEq<String> for Iso639a {
-    fn eq(&self, other: &String) -> bool {
-        format!("{self:?}").to_lowercase() == other.to_lowercase()
-    }
 }

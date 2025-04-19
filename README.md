@@ -1,4 +1,4 @@
-# Translatable 🌐🗣️💬🌍
+![translatable-readme](https://github.com/user-attachments/assets/4994514f-bbcc-48ea-a086-32e684adcd3a)
 
 [![Crates.io](https://img.shields.io/crates/v/translatable)](https://crates.io/crates/translatable)
 [![Docs.rs](https://docs.rs/translatable/badge.svg)](https://docs.rs/translatable)
@@ -10,28 +10,78 @@ Our goal is not to be *blazingly fast* but to provide the most user-friendly exp
 
 ## Table of Contents 📖
 
+- [Use Cases](#use-cases-)
 - [Features](#features-)
 - [Installation](#installation-)
-- [Usage](#usage-)
+- [Usage](#usage-%EF%B8%8F)
 - [Example implementation](#example-implementation-)
 - [Licensing](#license-)
 
 ## Features 🚀
 
-- **ISO 639-1 Standard**: Full support for 180+ language codes/names
-- **Compile-Time Safety**: Macro-based translation validation
-- **TOML Structure**: Hierarchical translation files with nesting
-- **Smart Error Messages**: Context-aware suggestions
-- **Template Validation**: Balanced bracket checking
-- **Flexible Loading**: Configurable file processing order
-- **Conflict Resolution**: Choose between first or last match priority
+- **ISO 639-1 Standard**: Full support for 180+ language codes/names.
+- **Adaptative optimizations**: Optimizations generated depending on call dynamism.
+- **Translation templating**: Make replacements with templates on your translations out of the box.
+- **Compile-Time validation**: Error reporting with *rust-analyzer* for static parameters.
+- **Custom file structure**: Translatable uses a walkdir implementation. Configure your translations folder.
+- **Conflict resolution**: Define translation processing rules with a `translatable.toml` file in the root directory.
+
+## Use Cases 🔍
+
+You may use translatable to write responses in back-end applications. Here is
+an example of how you can integrate this with [actix-web](https://actix.rs/).
+
+```rust
+use actix_web::{HttpRequest, HttpResponse, Responder, get};
+use translatable::{translation, Language};
+
+#[get("/echo")]
+pub async fn get_echo(req: HttpRequest) -> impl Responder {
+    let language = req
+        .headers()
+        .get("Accept-Language")
+        .and_then(|v| v.as_str().ok())
+        .and_then(|v| v.parse::<Language>().ok())
+        .unwrap_or(Language::EN);
+
+    HttpResponse::Ok()
+        .body(
+            match translation!(language, static routes::responses::get_echo) {
+                Ok(t) => t,
+                Err(err) => concat!("Translation error ", err.to_string())
+            }
+        )
+}
+```
+
+Or use it for front-end with [Leptos](https://leptos.dev/).
+
+```rust
+use leptos::prelude::*;
+use translatable::{translation, Language};
+
+#[component]
+pub fn Greeting(language: Language) -> impl IntoView {
+    let message = match translation!(language, static pages::misc::greeting) {
+        Ok(t) => t,
+        Err(err) => {
+            log::error!("Translation error {err:#}");
+            "Translation error.".into()
+        }
+    }
+
+    view! {
+        <h1>{ message }</h1>
+    }
+}
+```
 
 ## Installation 📦
 
-Run the following command in your project directory:
+Add the following to your `Cargo.toml` under the `dependencies` section
 
-```sh
-cargo add translatable
+```toml
+translatable = "1.0.0"
 ```
 
 ## Usage 🛠️
@@ -58,9 +108,12 @@ all the files inside the path must be TOML files and sub folders, a `walk_dir` a
 to load all the translations inside that folder.
 
 The translation files have three rules
-- Objects (including top level) can only contain objects and strings
-- If an object contains another object, it can only contain other objects (known as nested object)
-- If an object contains a string, it can only contain other strings (known as translation object)
+- Objects can only contain objects and translations. Top level can only contain objects.
+- If an object contains another object, it can only contain other objects (known as nested object).
+- If an object contains a string, it can only contain other strings (known as translation object).
+
+Translation strings can contain templates, you may add sets of braces to the string with a key inside
+and replace them while loading the translations with the macro.
 
 ### Loading translations
 
@@ -71,11 +124,10 @@ To load translations you make use of the `translatable::translation` macro, that
 parameters to be passed.
 
 The first parameter consists of the language which can be passed dynamically as a variable or an expression
-that resolves to an `impl Into<String>`, or statically as a `&'static str` literal. Not mattering the way
-it's passed, the translation must comply with the `ISO 639-1` standard.
+that resolves to a `Translatable::Language`, or statically as a `&'static str` literal. For static values, the translation must comply with the `ISO 639-1` standard, as it is parsed to a `Translatable::Language` in compile time.
 
 The second parameter consists of the path, which can be passed dynamically as a variable or an expression
-that resolves to an `impl Into<String>` with the format `path.to.translation`, or statically with the following
+that resolves to a `Vec<impl ToString>` containing each path section, or statically with the following
 syntax `static path::to::translation`.
 
 The rest of parameters are `meta-variable patterns` also known as `key = value` parameters or key-value pairs,
@@ -83,7 +135,7 @@ these are processed as replaces, *or format if the call is all-static*. When a t
 the name of a key inside it gets replaced for whatever is the `Display` implementation of the value. This meaning
 that the value must always implement `Display`. Otherwise, if you want to have a `{}` inside your translation,
 you can escape it the same way `format!` does, by using `{{}}`. Just like object construction works in rust, if
-you have a parameter like `x = x`, you can shorten it to `x`.
+you have a parameter like `x = x`, you can shorten it to `x`. The keys inside braces are XID validated.
 
 Depending on whether the parameters are static or dynamic the macro will act different, differing whether
 the checks are compile-time or run-time, the following table is a macro behavior matrix.
@@ -95,12 +147,11 @@ the checks are compile-time or run-time, the following table is a macro behavior
 | `static language` + `dynamic path`                 | Language validity                                        | `Result<String, TranslatableError>` (heap)                                        |
 | `dynamic language` + `static path` (commonly used) | Path existence                                           | `Result<String, TranslatableError>` (heap)                                        |
 
-- For the error handling, if you want to integrate this with `thiserror` you can use a `#[from] translatable::TranslationError`,
-as a nested error, all the errors implement display, for optimization purposes there are not the same amount of errors with
-dynamic parameters than there are with static parameters.
+- For the error handling, if you want to integrate this with `thiserror` you can use a `#[from] translatable::Error`,
+as a nested error, all the errors implement display.
 
-- The runtime errors implement a `cause()` method that returns a heap allocated `String` with the error reason, essentially
-the error display.
+- The runtime errors implement a `cause()` method that returns a heap allocated `String` with the error reason, essentially the error display. That method is marked with `#[cold]`, use it in paths that don't evaluate all the time,
+prefer using `or_else` than `or` which are lazy loaded methods.
 
 ## Example implementation 📂
 
@@ -139,12 +190,11 @@ Notice how there is a template, this template is being replaced by the
 `name = "john"` key value pair passed as third parameter.
 
 ```rust
-extern crate translatable;
-use translatable::translation;
+use translatable::{translation, Language};
 
 fn main() {
-    let dynamic_lang = "es";
-    let dynamic_path = "common.greeting"
+    let dynamic_lang = header.parse::<Language>();
+    let dynamic_path = vec!["common", "greeting"];
 
     assert!(translation!("es", static common::greeting, name = "john") == "¡Hola john!");
     assert!(translation!("es", dynamic_path, name = "john").unwrap() == "¡Hola john!".into());

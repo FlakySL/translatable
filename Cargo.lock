@@ -223,16 +223,31 @@ dependencies = [
 
 [[package]]
 name = "translatable"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
+ "strum",
  "thiserror",
  "translatable_proc",
+ "translatable_shared",
  "trybuild",
 ]
 
 [[package]]
 name = "translatable_proc"
-version = "0.1.0"
+version = "1.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "strum",
+ "syn",
+ "thiserror",
+ "toml",
+ "translatable_shared",
+]
+
+[[package]]
+name = "translatable_shared"
+version = "1.0.0"
 dependencies = [
  "proc-macro2",
  "quote",
