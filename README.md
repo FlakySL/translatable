@@ -139,8 +139,7 @@ Notice how there is a template, this template is being replaced by the
 `name = "john"` key value pair passed as third parameter.
 
 ```rust
-extern crate translatable;
-use translatable::translation;
+use translatable::{translation, Language};
 
 fn main() {
     let dynamic_lang = header.parse::<Language>();
