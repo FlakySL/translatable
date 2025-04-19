@@ -10,6 +10,7 @@ Our goal is not to be *blazingly fast* but to provide the most user-friendly exp
 
 ## Table of Contents 📖
 
+- [Use Cases](#use-cases-)
 - [Features](#features-)
 - [Installation](#installation-)
 - [Usage](#usage-%EF%B8%8F)
@@ -24,6 +25,56 @@ Our goal is not to be *blazingly fast* but to provide the most user-friendly exp
 - **Compile-Time validation**: Error reporting with *rust-analyzer* for static parameters.
 - **Custom file structure**: Translatable uses a walkdir implementation. Configure your translations folder.
 - **Conflict resolution**: Define translation processing rules with a `translatable.toml` file in the root directory.
+
+## Use Cases 🔍
+
+You may use translatable to write responses in back-end applications. Here is
+an example of how you can integrate this with [actix-web](https://actix.rs/).
+
+```rust
+use actix_web::{HttpRequest, HttpResponse, Responder, get};
+use translatable::{translation, Language};
+
+#[get("/echo")]
+pub async fn get_echo(req: HttpRequest) -> impl Responder {
+    let language = req
+        .headers()
+        .get("Accept-Language")
+        .and_then(|v| v.as_str().ok())
+        .and_then(|v| v.parse::<Language>().ok())
+        .unwrap_or(Language::EN);
+
+    HttpResponse::Ok()
+        .body(
+            match translation!(language, static routes::responses::get_echo) {
+                Ok(t) => t,
+                Err(err) => concat!("Translation error ", err.to_string())
+            }
+        )
+}
+```
+
+Or use it for front-end with [Leptos](https://leptos.dev/).
+
+```rust
+use leptos::prelude::*;
+use translatable::{translation, Language};
+
+#[component]
+pub fn Greeting(language: Language) -> impl IntoView {
+    let message = match translation!(language, static pages::misc::greeting) {
+        Ok(t) => t,
+        Err(err) => {
+            log::error!("Translation error {err:#}");
+            "Translation error.".into()
+        }
+    }
+
+    view! {
+        <h1>{ message }</h1>
+    }
+}
+```
 
 ## Installation 📦
 
