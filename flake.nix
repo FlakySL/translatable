@@ -1,5 +1,5 @@
 {
-  description = "Flake configuration file for translatable.rs development.";
+  description = "Flake configuration file for translatable development.";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     crane.url = "github:ipetkov/crane";
@@ -7,44 +7,28 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs =
-    {
-      nixpkgs,
-      flake-utils,
-      fenix,
-      ...
-    }@inputs:
-    flake-utils.lib.eachDefaultSystem (
-      system:
+  outputs = { nixpkgs, flake-utils, fenix, ... }@inputs:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         crane = inputs.crane.mkLib pkgs;
 
-        toolchain =
-          with fenix.packages.${system};
+        toolchain = with fenix.packages.${system};
           combine [
-            minimal.rustc
-            minimal.cargo
-            complete.rust-src
+            stable.rustc
+            stable.cargo
+            stable.rust-src
             complete.rustfmt
-            complete.clippy
+            stable.clippy
+            stable.rust-analyzer
           ];
 
         craneLib = crane.overrideToolchain toolchain;
-      in
-      {
+      in {
         devShells.default = craneLib.devShell {
-          packages = with pkgs; [
-            toolchain
-            rustfmt
-            clippy
-            qemu-user
-          ];
+          packages = with pkgs; [ toolchain gnumake ];
 
-          env = {
-            LAZYVIM_RUST_DIAGNOSTICS = "bacon-ls";
-          };
+          env = { LAZYVIM_RUST_DIAGNOSTICS = "bacon-ls"; };
         };
-      }
-    );
+      });
 }
