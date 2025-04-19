@@ -12,7 +12,7 @@ Our goal is not to be *blazingly fast* but to provide the most user-friendly exp
 
 - [Features](#features-)
 - [Installation](#installation-)
-- [Usage](#usage-)
+- [Usage](#usage-%EF%B8%8F)
 - [Example implementation](#example-implementation-)
 - [Licensing](#license-)
 
