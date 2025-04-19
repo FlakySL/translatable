@@ -7,7 +7,7 @@ considering submitting any of the above.
 ## Submitting Bug Reports and Feature Requests
 
 To submit a bug report or feature request, you can open an issue in this
-repository: [`FlakySL/translatable.rs`](https://github.com/FlakySL/translatable.rs).
+repository: [`FlakySL/translatable`](https://github.com/FlakySL/translatable).
 
 When reporting a bug or requesting help, please include sufficient details
 to allow others to reproduce the behavior you're encountering. For guidance on
@@ -28,14 +28,14 @@ We recommend using the issue templates provided in this repository.
 
 ## Running Tests and Compiling the Project
 
-This project uses [cargo](https://github.com/rust-lang/cargo) the rust package manager.
+This project uses GNU [make](https://www.gnu.org/software/make/).
 
-- Run tests using `cargo test`.
-- Compile the project using `cargo build`.
+- Run tests using `make test`.
+- Compile the project using `make build`.
 
 ## Code of Conduct
 
-The Translatable community follows the[Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).
+The Translatable community follows the [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).
 For moderation issues or escalation, please contact Esteve or Luis at
 [moderation@flaky.es](mailto:moderation@flaky.es) rather than the Rust
 moderation team.

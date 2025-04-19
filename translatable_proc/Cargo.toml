@@ -1,7 +1,7 @@
 [package]
 name = "translatable_proc"
 description = "Proc macro crate for the translatable library."
-repository = "https://github.com/FlakySL/translatable.rs"
+repository = "https://github.com/FlakySL/translatable"
 license = "MIT OR Apache-2.0"
 readme = "../README-MACROS.md"
 version = "1.0.0"

@@ -63,7 +63,7 @@ pub enum TranslationNodeError {
     /// This error signals that a created translation file
     /// is empty and cannot be parsed.
     #[error("A translation file cannot be empty")]
-    EmptyTable
+    EmptyTable,
 }
 
 /// Nesting type alias.

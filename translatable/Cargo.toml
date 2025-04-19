@@ -1,7 +1,7 @@
 [package]
 name = "translatable"
 description = "A robust internationalization solution for Rust featuring compile-time validation, ISO 639-1 compliance, and TOML-based translation management. "
-repository = "https://github.com/FlakySL/translatable.rs"
+repository = "https://github.com/FlakySL/translatable"
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
 version = "1.0.0"

@@ -55,7 +55,7 @@ pub struct FormatString {
     /// with `self.spans`.
     ///
     /// This should never be mutated for the sake
-    /// of keping the alignment with `self.spans`.
+    /// of keeping the alignment with `self.spans`.
     original: String,
 
     /// Template spans.
@@ -75,8 +75,8 @@ impl FormatString {
     ///
     /// This function takes data that may be generated
     /// from a macro output and constructs an instance
-    /// of [`FormatString`] keeping it's fields
-    /// private an inmutable.
+    /// of [`FormatString`] keeping its fields
+    /// private an immutable.
     ///
     /// If you use this to construct the instance manually
     /// there is no promise that the string and spans

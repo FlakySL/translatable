@@ -57,7 +57,7 @@ all the files inside the path must be TOML files and sub folders, a `walk_dir` a
 to load all the translations inside that folder.
 
 The translation files have three rules
-- Objects can only contain objects and. Top level can only contain objects.
+- Objects can only contain objects and translations. Top level can only contain objects.
 - If an object contains another object, it can only contain other objects (known as nested object).
 - If an object contains a string, it can only contain other strings (known as translation object).
 
