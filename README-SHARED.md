@@ -1,6 +1,6 @@
-# Translatable Macros
+# Translatable Shared
 
-This crate exists solely to provide macros for the [Translatable]
+This crate exists solely to provide utilities for the [Translatable]
 crate. Using this crate without the main Translatable crate is
 **not supported**, and any support requests or bug reports regarding
 standalone usage will be redirected to the
