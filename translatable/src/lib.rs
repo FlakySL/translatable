@@ -25,11 +25,11 @@ pub use error::RuntimeError as Error;
 #[rustfmt::skip]
 pub use translatable_proc::translation;
 
-/// User-facing util re-exports.
+/// Language enum re-export.
 ///
 /// This `use` statement re-exports
-/// all the shared module items that
-/// are useful for the end-user.
+/// from the hidden shared re-export
+/// for user convenience on parsing.
 #[rustfmt::skip]
 pub use shared::misc::language::Language;
 
