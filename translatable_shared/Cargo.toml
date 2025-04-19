@@ -3,8 +3,8 @@ name = "translatable_shared"
 description = "Shared dependencies crate for translatable."
 repository = "https://github.com/FlakySL/translatable.rs"
 license = "MIT OR Apache-2.0"
-readme = "../README-MACROS.md"
-version = "0.1.0"
+readme = "../README-SHARED.md"
+version = "1.0.0"
 edition = "2024"
 authors = ["Esteve Autet <esteve@memw.es>", "Chiko <chiko@envs.net>"]
 

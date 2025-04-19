@@ -223,7 +223,7 @@ dependencies = [
 
 [[package]]
 name = "translatable"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "strum",
  "thiserror",
@@ -234,7 +234,7 @@ dependencies = [
 
 [[package]]
 name = "translatable_proc"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -247,7 +247,7 @@ dependencies = [
 
 [[package]]
 name = "translatable_shared"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "proc-macro2",
  "quote",

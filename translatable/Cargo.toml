@@ -4,7 +4,7 @@ description = "A robust internationalization solution for Rust featuring compile
 repository = "https://github.com/FlakySL/translatable.rs"
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 authors = ["Esteve Autet <esteve@memw.es>", "Chiko <chiko@envs.net>"]
 keywords = [
@@ -18,8 +18,8 @@ keywords = [
 [dependencies]
 strum = { version = "0.27.1", features = ["derive"] }
 thiserror = "2.0.12"
-translatable_proc = { path = "../translatable_proc" }
-translatable_shared = { path = "../translatable_shared/" }
+translatable_proc = { version = "1", path = "../translatable_proc" }
+translatable_shared = { version = "1", path = "../translatable_shared/" }
 
 [dev-dependencies]
 trybuild = "1.0.104"
