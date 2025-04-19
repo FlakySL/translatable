@@ -30,7 +30,7 @@ impl TranslationNodeCollection {
     ///
     /// The file paths in the hashmap key aren't validated. This
     /// is usually called from a `to-runtime` implementation, if
-    /// you want to obtain all the translation files use 
+    /// you want to obtain all the translation files use
     ///
     /// **Arguments**
     /// * `collection` - An already populated collection for lookup.
@@ -82,13 +82,12 @@ impl TranslationNodeCollection {
 
 /// Hashmap wrapper implementation.
 ///
-/// Abstraction to easily collect a [`HashMap<String, TranslationNode>`] and wrap it
-/// in a [`TranslationNodeCollection`].
+/// Abstraction to easily collect a [`HashMap<String, TranslationNode>`] and
+/// wrap it in a [`TranslationNodeCollection`].
 impl FromIterator<(String, TranslationNode)> for TranslationNodeCollection {
     fn from_iter<T: IntoIterator<Item = (String, TranslationNode)>>(iter: T) -> Self {
         Self(
-            iter
-                .into_iter()
+            iter.into_iter()
                 .collect(),
         )
     }

@@ -109,7 +109,9 @@ impl FormatString {
             .original
             .clone();
 
-        let mut spans = self.spans.clone();
+        let mut spans = self
+            .spans
+            .clone();
         spans.sort_by_key(|(_key, range)| range.start);
 
         let mut offset = 0isize;

@@ -24,14 +24,11 @@ use crate::misc::templating::{FormatString, TemplateError};
 /// while trying seeking for it's content.
 #[derive(Error, Debug)]
 pub enum TranslationNodeError {
-    // We need to possibly solve the ambiguity between
-    // InvalidNesting and InvalidValue.
-
     /// Invalid object type error.
     ///
     /// This error signals that the nesting rules were
     /// broken, thus the parsing cannot continue.
-    #[error("A nesting can contain either strings or other nestings, but not both.")]
+    #[error("A nesting can only contain translation objects or other nestings")]
     InvalidNesting,
 
     /// Template validation error.
@@ -45,9 +42,12 @@ pub enum TranslationNodeError {
     /// Invalid value found inside a nesting.
     ///
     /// This error signals that an invalid value was found
-    /// inside a nesting.
-    #[error("Only strings and objects are allowed for nested objects.")]
-    InvalidValue,
+    /// inside a nesting, such as mixed values.
+    #[error(
+        "Mixed values are not allowed, a nesting can't contain strings and objects at the same \
+         time"
+    )]
+    MixedValues,
 
     /// Invalid ISO-639-1 translation key.
     ///
@@ -57,6 +57,13 @@ pub enum TranslationNodeError {
     /// Translation keys must follow the ISO-639-1 standard.
     #[error("Couldn't parse ISO 639-1 string for translation key")]
     LanguageParsing(#[from] ParseError),
+
+    /// Empty translation file.
+    ///
+    /// This error signals that a created translation file
+    /// is empty and cannot be parsed.
+    #[error("A translation file cannot be empty")]
+    EmptyTable
 }
 
 /// Nesting type alias.
@@ -161,42 +168,40 @@ impl ToTokens for TranslationNode {
 ///
 /// This implementation parses a TOML table object
 /// into a [`TranslationNode`] for validation and
-/// seeking the translations acording to the rules.
+/// seeking the translations according to the rules.
 impl TryFrom<Table> for TranslationNode {
     type Error = TranslationNodeError;
 
+    // The top level can only contain objects is never enforced.
     fn try_from(value: Table) -> Result<Self, Self::Error> {
         let mut result = None;
 
         for (key, value) in value {
             match value {
                 Value::String(translation_value) => {
-                    let result = result.get_or_insert_with(|| Self::Translation(HashMap::new()));
-
-                    match result {
+                    match result.get_or_insert_with(|| Self::Translation(HashMap::new())) {
                         Self::Translation(translation) => {
                             translation.insert(key.parse()?, translation_value.parse()?);
                         },
 
-                        Self::Nesting(_) => return Err(TranslationNodeError::InvalidNesting),
+                        Self::Nesting(_) => return Err(TranslationNodeError::MixedValues),
                     }
                 },
 
                 Value::Table(nesting_value) => {
-                    let result = result.get_or_insert_with(|| Self::Nesting(HashMap::new()));
-
-                    match result {
+                    match result.get_or_insert_with(|| Self::Nesting(HashMap::new())) {
                         Self::Nesting(nesting) => {
                             nesting.insert(key, Self::try_from(nesting_value)?);
                         },
-                        Self::Translation(_) => return Err(TranslationNodeError::InvalidNesting),
+
+                        Self::Translation(_) => return Err(TranslationNodeError::MixedValues),
                     }
                 },
 
-                _ => return Err(TranslationNodeError::InvalidValue),
+                _ => return Err(TranslationNodeError::InvalidNesting),
             }
         }
 
-        result.ok_or(TranslationNodeError::InvalidValue)
+        result.ok_or(TranslationNodeError::EmptyTable)
     }
 }
