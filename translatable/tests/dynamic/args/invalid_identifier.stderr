@@ -1,5 +1,0 @@
-error: expected identifier
- --> tests/dynamic/args/invalid_identifier.rs:8:30
-  |
-8 |     translation!(lang, path, 42 = "value");
-  |                              ^^

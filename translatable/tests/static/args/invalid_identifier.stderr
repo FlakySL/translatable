@@ -1,5 +1,0 @@
-error: expected identifier
- --> tests/static/args/invalid_identifier.rs:5:49
-  |
-5 |     translation!("es", static common::greeting, 42 = "value");
-  |                                                 ^^

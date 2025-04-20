@@ -1,0 +1,7 @@
+error: The path 'foo::bar' could not be found
+ --> tests/ui/fail/missing_path.rs:5:13
+  |
+5 |     let _ = translation!("en", static foo::bar, name = "X");
+  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the macro `translation` (in Nightly builds, run with -Z macro-backtrace for more info)

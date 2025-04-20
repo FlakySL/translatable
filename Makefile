@@ -1,4 +1,4 @@
-export TRANSLATABLE_LOCALES_PATH=${PWD}/translatable/tests/translations
+export TRANSLATABLE_LOCALES_PATH=${PWD}/translatable/tests/fixtures/translations
 
 test:
 	cargo test -p translatable -- --nocapture --color=always
