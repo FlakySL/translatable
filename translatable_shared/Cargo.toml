@@ -2,7 +2,7 @@
 name = "translatable_shared"
 description = "Shared dependencies crate for translatable."
 repository = "https://github.com/FlakySL/translatable"
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0"
 readme = "../README-SHARED.md"
 version = "1.0.0"
 edition = "2024"
