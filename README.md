@@ -205,13 +205,8 @@ fn main() {
 
 ## License 📜
 
-<sup>
-This repository is licensed under either of <a href="LICENSE-APACHE">Apache License, Version 2.0</a>
-or <a href="LICENSE-MIT">MIT license</a> at your option.
-</sup>
-<br>
-<sub>
-Unless you explicitly state any contribution intentionally submitted
-for inclusion in translatable by you, as defined in the Apache-2.0 license, shall be
-dual licensed as above, without any additional terms or conditions.
-</sub>
+This repository is dual licensed, TLDR. If your repository is open source, the library
+is free of use, otherwise contact [licensing@flaky.es](mailto:licensing@flaky.es) for a custom license for your
+use case.
+
+For more information read the [license](./LICENSE) file.
