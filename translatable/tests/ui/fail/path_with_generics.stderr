@@ -1,5 +1,0 @@
-error: This translation path contains generic arguments, and cannot be parsed
- --> tests/ui/fail/path_with_generics.rs:4:47
-  |
-4 |     let _ = translation!("en", static foo::Bar<T>, name = "X");
-  |                                               ^^^

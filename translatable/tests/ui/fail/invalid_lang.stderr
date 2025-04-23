@@ -1,5 +1,0 @@
-error: The literal 'zz' is an invalid ISO 639-1 string, and cannot be parsed
- --> tests/ui/fail/invalid_lang.rs:5:26
-  |
-5 |     let _ = translation!("zz", static common::greeting, name = "Alice");
-  |                          ^^^^
