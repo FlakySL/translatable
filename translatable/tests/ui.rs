@@ -9,9 +9,10 @@ fn set_test_environment(environment: &str) {
 
 #[test]
 fn ui_tests() {
-    set_test_environment("everything_valid");
-
     let t = TestCases::new();
+
+    // general test cases.
+    set_test_environment("everything_valid");
 
     t.pass("./ui/language/pass*.rs");
     t.compile_fail("./ui/language/fail*.rs");
@@ -22,5 +23,15 @@ fn ui_tests() {
     t.pass("./ui/templates/pass*.rs");
     t.compile_fail("./ui/templates/fail*.rs");
 
-    // TODO: run each test with it's set environment.
+    // invalid path in configuration.
+    set_test_environment("config_path_missmatch");
+    t.compile_fail("./ui/config/fail_config_path_missmatch.rs");
+
+    // invalid enum value in configuration.
+    set_test_environment("config_invalid_value");
+    t.compile_fail("./ui/config/fail_config_invalid_enums.rs");
+
+    // translation file rule broken.
+    set_test_environment("translations_malformed");
+    t.compile_fail("./ui/config/fail_translations_malformed.rs");
 }
