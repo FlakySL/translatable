@@ -1,0 +1,5 @@
+# There is nothing to load in this test set.
+# This remains to avoid *other* errors while expecting invalid value error.
+#
+# By logic the configuration loading errors should precede. But this is
+# better left undefined behavior.
