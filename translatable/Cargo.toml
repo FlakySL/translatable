@@ -16,7 +16,6 @@ keywords = [
 ]
 
 [dependencies]
-strum = { version = "0.27.1", features = ["derive"] }
 thiserror = "2.0.12"
 translatable_proc = { version = "1", path = "../translatable_proc" }
 translatable_shared = { version = "1", path = "../translatable_shared/" }

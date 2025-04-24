@@ -225,7 +225,6 @@ dependencies = [
 name = "translatable"
 version = "1.0.0"
 dependencies = [
- "strum",
  "thiserror",
  "translatable_proc",
  "translatable_shared",
