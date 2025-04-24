@@ -1,6 +1,15 @@
 use std::env::set_current_dir;
-
 use trybuild::TestCases;
+
+// so dynamic tests also run.
+#[allow(unused_imports)]
+use integration::language::*;
+#[allow(unused_imports)]
+use integration::path::*;
+#[allow(unused_imports)]
+use integration::templates::*;
+
+mod integration;
 
 fn set_test_environment(environment: &str) {
     set_current_dir(format!("tests/ui/environments/{environment}"))
@@ -8,7 +17,7 @@ fn set_test_environment(environment: &str) {
 }
 
 #[test]
-fn ui_tests() {
+fn compile_tests() {
     let t = TestCases::new();
 
     // general test cases.
