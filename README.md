@@ -137,15 +137,20 @@ that the value must always implement `Display`. Otherwise, if you want to have a
 you can escape it the same way `format!` does, by using `{{}}`. Just like object construction works in rust, if
 you have a parameter like `x = x`, you can shorten it to `x`. The keys inside braces are XID validated.
 
+Have in mind that templates are specific to each translation, each language can contain it's own set
+of templates, it is recommended that while loading a translation all the possible templates and combinations
+are set if the language is dynamic. Templates are not validated, they are just replaced if found, otherwise
+ignored, if not found the original template will remain untouched.
+
 Depending on whether the parameters are static or dynamic the macro will act different, differing whether
 the checks are compile-time or run-time, the following table is a macro behavior matrix.
 
-| Parameters                                         | Compile-Time checks                                      | Return type                                                                       |
-|----------------------------------------------------|----------------------------------------------------------|-----------------------------------------------------------------------------------|
-| `static language` + `static path` (most optimized) | Path existence, Language validity                        | `&'static str` (stack) if there are no templates or `String` (heap) if there are. |
-| `dynamic language` + `dynamic path`                | None                                                     | `Result<String, TranslatableError>` (heap)                                        |
-| `static language` + `dynamic path`                 | Language validity                                        | `Result<String, TranslatableError>` (heap)                                        |
-| `dynamic language` + `static path` (commonly used) | Path existence                                           | `Result<String, TranslatableError>` (heap)                                        |
+| Parameters                                         | Compile-Time checks               | Return type             |
+|----------------------------------------------------|-----------------------------------|-------------------------|
+| `static language` + `static path` (most optimized) | Path existence, Language validity | `String`                |
+| `dynamic language` + `dynamic path`                | None                              | `Result<String, Error>` |
+| `static language` + `dynamic path`                 | Language validity                 | `Result<String, Error>` |
+| `dynamic language` + `static path` (commonly used) | Path existence                    | `Result<String, Error>` |
 
 - For the error handling, if you want to integrate this with `thiserror` you can use a `#[from] translatable::Error`,
 as a nested error, all the errors implement display.
