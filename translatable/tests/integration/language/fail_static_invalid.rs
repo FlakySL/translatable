@@ -1,5 +1,6 @@
+#[allow(unused_imports)]
 use translatable::translation;
 
-fn fail_static_invalid() {
+fn main() {
     translation!("xx", static greetings::formal);
 }

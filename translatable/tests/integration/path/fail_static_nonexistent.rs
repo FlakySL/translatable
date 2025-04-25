@@ -1,5 +1,6 @@
+#[allow(unused_imports)]
 use translatable::translation;
 
-fn fail_static_nonexistent() {
+fn main() {
     translation!("es", static non::existing::path);
 }

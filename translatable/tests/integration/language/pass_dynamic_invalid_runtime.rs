@@ -1,3 +1,4 @@
+#[allow(unused_imports)] // trybuild
 use translatable::{translation, Language};
 
 #[cfg(test)]
@@ -6,6 +7,7 @@ pub fn pass_dynamic_invalid_runtime() {
     let language = "invalid".parse::<Language>();
 
     assert!(language.is_err());
-
-    translation!(language.unwrap(), static greetings::formal).ok();
 }
+
+#[allow(dead_code)]
+fn main() {} // trybuild

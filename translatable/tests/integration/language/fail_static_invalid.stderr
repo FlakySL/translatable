@@ -1,0 +1,5 @@
+error: The literal 'xx' is an invalid ISO 639-1 string, and cannot be parsed
+ --> tests/integration/language/fail_static_invalid.rs:5:18
+  |
+5 |     translation!("xx", static greetings::formal);
+  |                  ^^^^

@@ -1,3 +1,4 @@
+#[allow(unused_imports)] // trybuild
 use translatable::translation;
 
 #[cfg(test)]
@@ -11,3 +12,6 @@ pub fn pass_dynamic_expr() {
 
     assert_eq!(translation, "Bueno conocerte.");
 }
+
+#[allow(dead_code)]
+fn main() {} // trybuild

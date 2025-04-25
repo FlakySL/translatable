@@ -1,3 +1,4 @@
+#[allow(unused_imports)] // trybuild
 use translatable::{translation, Language};
 
 #[cfg(test)]
@@ -9,3 +10,5 @@ pub fn pass_dynamic_enum() {
     assert_eq!(translation, "Bueno conocerte.");
 }
 
+#[allow(dead_code)]
+fn main() {} // trybuild

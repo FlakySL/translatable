@@ -1,3 +1,4 @@
+#[allow(unused_imports)] // trybuild
 use translatable::translation;
 
 #[cfg(test)]
@@ -7,3 +8,6 @@ pub fn pass_static_existing() {
 
     assert_eq!(translation, "Bueno conocerte.");
 }
+
+#[allow(dead_code)]
+fn main() {} // trybuild
