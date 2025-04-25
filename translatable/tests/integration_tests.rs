@@ -12,7 +12,7 @@ use integration::templates::*;
 mod integration;
 
 fn set_test_environment(environment: &str) {
-    set_current_dir(format!("tests/ui/environments/{environment}"))
+    set_current_dir(format!("tests/environments/{environment}"))
         .expect("Should be able to change environment.");
 }
 
