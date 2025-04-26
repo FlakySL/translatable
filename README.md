@@ -70,7 +70,7 @@ pub fn Greeting(language: Language) -> impl IntoView {
             log::error!("Translation error {err:#}");
             "Translation error.".into()
         }
-    }
+    };
 
     view! {
         <h1>{ message }</h1>

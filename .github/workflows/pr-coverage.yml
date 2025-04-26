@@ -1,4 +1,4 @@
-name: PR Coverage check
+name: pr coverage
 
 on:
   pull_request:

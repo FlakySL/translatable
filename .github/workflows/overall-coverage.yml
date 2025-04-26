@@ -1,4 +1,4 @@
-name: Overall coverage upload on main
+name: tests
 
 on:
   push:
