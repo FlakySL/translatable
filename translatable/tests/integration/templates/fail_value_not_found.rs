@@ -4,5 +4,5 @@ use translatable::translation;
 struct NotDisplay;
 
 fn main() {
-    translation!("es", static greetings::informal, user = NotDisplay);
+    translation!("es", static greetings::informal, user);
 }

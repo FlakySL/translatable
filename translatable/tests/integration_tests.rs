@@ -1,7 +1,6 @@
-use std::env::current_dir;
-use std::env::set_current_dir;
 use std::env::set_var;
-use std::sync::OnceLock;
+use std::env::var;
+use std::fs::canonicalize;
 use trybuild::TestCases;
 
 // so dynamic tests also run.
@@ -14,9 +13,25 @@ use integration::templates::*;
 
 mod integration;
 
+const PATH_ENV: &str = "TRANSLATABLE_LOCALES_PATH";
+const OVERLAP_ENV: &str = "TRANSLATABLE_OVERLAP";
+const SEEK_MODE_ENV: &str = "TRANSLATABLE_SEEK_MODE";
+
+fn set_locales_env(env: &str) {
+    unsafe {
+        set_var(
+            PATH_ENV,
+            canonicalize(format!("./tests/environments/{env}/translations/"))
+                .unwrap()
+        );
+    }
+}
+
 #[test]
 fn compile_tests() {
     let t = TestCases::new();
+
+    set_locales_env("everything_valid");
 
     t.pass("./tests/integration/language/pass*.rs");
     t.compile_fail("./tests/integration/language/fail*.rs");

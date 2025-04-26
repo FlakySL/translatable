@@ -1,0 +1,7 @@
+error: The path 'non::existing::path' could not be found
+ --> tests/integration/path/fail_static_nonexistent.rs:5:5
+  |
+5 |     translation!("es", static non::existing::path);
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the macro `translation` (in Nightly builds, run with -Z macro-backtrace for more info)
