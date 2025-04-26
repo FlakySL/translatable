@@ -39,11 +39,6 @@ jobs:
           TAG=$(git describe --tags --abbrev=0 || echo "")
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Install guile and guile-semver
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y guile-semver
-
       - name: Compare versions
         id: should_publish
         run: |
