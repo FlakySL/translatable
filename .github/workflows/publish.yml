@@ -58,7 +58,9 @@ jobs:
       - name: Publish to crates.io
         if: steps.should_publish.outputs.publish == 'true'
         run: |
-          cargo publish
+          cargo publish -p translatable_shared
+          cargo publish -p translatable_proc
+          cargo publish -p translatable
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
