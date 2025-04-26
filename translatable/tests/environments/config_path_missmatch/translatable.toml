@@ -1,2 +1,0 @@
-# A path missmatch should cause a "file not found" error.
-# If the default path (./translations) does not exist, that will raise.

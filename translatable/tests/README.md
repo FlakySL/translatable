@@ -33,4 +33,5 @@ This project uses make for some command recipes. You can run `make test` and it 
 test the application with the correct parameters.
 
 If you are using `cargo test` directly make sure to run the tests with `--test-threds=1`,
-there are locks in place so nothing happens, but to make sure you should do that anyway.
+there are locks in place so nothing happens, but to make sure you should do that
+anyway.

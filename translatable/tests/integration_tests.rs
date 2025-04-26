@@ -1,6 +1,7 @@
+use std::env::remove_var;
 use std::env::set_var;
-use std::env::var;
 use std::fs::canonicalize;
+use std::sync::Mutex;
 use trybuild::TestCases;
 
 // so dynamic tests also run.
@@ -15,9 +16,25 @@ mod integration;
 
 const PATH_ENV: &str = "TRANSLATABLE_LOCALES_PATH";
 const OVERLAP_ENV: &str = "TRANSLATABLE_OVERLAP";
-const SEEK_MODE_ENV: &str = "TRANSLATABLE_SEEK_MODE";
 
-fn set_locales_env(env: &str) {
+static ENV_MUTEX: Mutex<()> = Mutex::new(());
+
+macro_rules! lock_env {
+    () => {
+        let _env_guard = ENV_MUTEX.lock();
+    };
+}
+
+#[inline]
+unsafe fn set_default_env() {
+    unsafe {
+        set_locales_env("everything_valid");
+        remove_var(OVERLAP_ENV);
+    }
+}
+
+#[inline]
+unsafe fn set_locales_env(env: &str) {
     unsafe {
         set_var(
             PATH_ENV,
@@ -28,26 +45,68 @@ fn set_locales_env(env: &str) {
 }
 
 #[test]
-fn compile_tests() {
-    let t = TestCases::new();
+fn valid_environment() {
+    unsafe {
+        let t = TestCases::new();
 
-    set_locales_env("everything_valid");
+        lock_env!();
 
-    t.pass("./tests/integration/language/pass*.rs");
-    t.compile_fail("./tests/integration/language/fail*.rs");
+        set_default_env();
+        set_locales_env("everything_valid");
 
-    t.pass("./tests/integration/path/pass*.rs");
-    t.compile_fail("./tests/integration/path/fail*.rs");
+        t.pass("./tests/integration/language/pass*.rs");
+        t.compile_fail("./tests/integration/language/fail*.rs");
 
-    t.pass("./tests/integration/templates/pass*.rs");
-    t.compile_fail("./tests/integration/templates/fail*.rs");
+        t.pass("./tests/integration/path/pass*.rs");
+        t.compile_fail("./tests/integration/path/fail*.rs");
 
-    // invalid path in configuration.
-//    t.compile_fail("../../integration/config/fail_config_path_missmatch.rs");
+        t.pass("./tests/integration/templates/pass*.rs");
+        t.compile_fail("./tests/integration/templates/fail*.rs");
+    }
+}
 
-    // invalid enum value in configuration.
-//    t.compile_fail("../../integration/config/fail_config_invalid_enums.rs");
+#[test]
+fn invalid_tests_path() {
+    unsafe {
+        let t = TestCases::new();
 
-    // translation file rule broken.
-//    t.compile_fail("../../integration/config/fail_translations_malformed.rs");
+        lock_env!();
+
+        set_default_env();
+        set_var(PATH_ENV, "something_invalid");
+
+        // invalid path in configuration.
+        t.compile_fail("./tests/integration/config/fail_config_path_missmatch.rs");
+    }
+}
+
+#[test]
+fn invalid_config_value() {
+    unsafe {
+        let t = TestCases::new();
+
+        lock_env!();
+
+        set_default_env();
+        set_locales_env("everything_valid");
+        set_var(OVERLAP_ENV, "49854835093459fjkdjfkj");
+
+        // invalid enum value in configuration.
+        t.compile_fail("./tests/integration/config/fail_config_invalid_enums.rs");
+    }
+}
+
+#[test]
+fn translations_malformed() {
+    unsafe {
+        let t = TestCases::new();
+
+        lock_env!();
+
+        set_default_env();
+        set_locales_env("translations_malformed");
+
+        // translation file rule broken.
+        t.compile_fail("./tests/integration/config/fail_translations_malformed.rs");
+    }
 }

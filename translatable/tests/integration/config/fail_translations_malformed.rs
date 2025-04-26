@@ -1,8 +1,9 @@
 // the macro isn't filled because the expected
 // failure is on configuration.
 
+#[allow(unused_imports)]
 use translatable::{translation, Language};
 
-fn fail_translations_malformed() {
-    translation!(Language::ES, vec![]);
+fn main() {
+    let _ = translation!(Language::ES, vec![""]);
 }
