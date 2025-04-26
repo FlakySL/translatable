@@ -2,6 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/translatable)](https://crates.io/crates/translatable)
 [![Docs.rs](https://docs.rs/translatable/badge.svg)](https://docs.rs/translatable)
+[![CodeCov](https://codecov.io/github/FlakySL/translatable/config/badge)](https://codecov.io/github/FlakySL/translatable)
 
 A robust internationalization solution for Rust featuring compile-time validation, ISO 639-1 compliance, and TOML-based translation management.
 
