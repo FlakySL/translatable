@@ -46,7 +46,7 @@ pub enum TranslationDataError {
     ///
     /// [`From<std::io::Error>`]: std::io::Error
     /// [`Display`]: std::fmt::Display
-    #[error("There was a problem with an IO operation: {0:#}")]
+    #[error("IO Error: \"{0:#}\". Please check the specified path in your configuration file.")]
     Io(#[from] IoError),
 
     /// Configuration loading failure.

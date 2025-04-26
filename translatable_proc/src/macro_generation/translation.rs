@@ -19,8 +19,8 @@ use crate::macro_input::translation::TranslationMacroArgs;
 
 /// Macro compile-time translation resolution error.
 ///
-/// Represents errors that can occur while compiling the [`translation!()`] macro.
-/// This includes cases where a translation path cannot be found or
+/// Represents errors that can occur while compiling the [`translation!()`]
+/// macro. This includes cases where a translation path cannot be found or
 /// a language variant is unavailable at the specified path.
 ///
 /// These errors are reported at compile-time by `rust-analyzer`

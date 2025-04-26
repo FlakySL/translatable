@@ -1,0 +1,22 @@
+error[E0599]: `NotDisplay` doesn't implement `std::fmt::Display`
+ --> tests/integration/templates/fail_not_display.rs:7:5
+  |
+4 | struct NotDisplay;
+  | ----------------- method `to_string` not found for this struct because it doesn't satisfy `NotDisplay: ToString` or `NotDisplay: std::fmt::Display`
+...
+7 |     translation!("es", static greetings::informal, user = NotDisplay);
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `NotDisplay` cannot be formatted with the default formatter
+  |
+  = note: the following trait bounds were not satisfied:
+          `NotDisplay: std::fmt::Display`
+          which is required by `NotDisplay: ToString`
+  = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+note: the trait `std::fmt::Display` must be implemented
+ --> $RUST/core/src/fmt/mod.rs
+  |
+  | pub trait Display {
+  | ^^^^^^^^^^^^^^^^^
+  = help: items from traits can only be used if the trait is implemented and in scope
+  = note: the following trait defines an item `to_string`, perhaps you need to implement it:
+          candidate #1: `ToString`
+  = note: this error originates in the macro `translation` (in Nightly builds, run with -Z macro-backtrace for more info)

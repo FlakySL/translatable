@@ -127,6 +127,11 @@ impl Parse for TranslationMacroArgs {
         if input.peek(Token![,]) {
             while !input.is_empty() {
                 input.parse::<Token![,]>()?;
+
+                if input.is_empty() {
+                    break;
+                }
+
                 let key = input.parse::<Ident>()?;
                 let value = match input.parse::<Token![=]>() {
                     Ok(_) => input

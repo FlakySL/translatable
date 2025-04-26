@@ -1,0 +1,7 @@
+error: IO Error: "No such file or directory (os error 2)". Please check the specified path in your configuration file.
+ --> tests/integration/config/fail_config_path_missmatch.rs
+  |
+  |     let _ = translation!(Language::ES, vec![""]);
+  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the macro `translation` (in Nightly builds, run with -Z macro-backtrace for more info)

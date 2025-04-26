@@ -1,0 +1,7 @@
+error: A nesting can only contain translation objects or other nestings
+ --> tests/integration/config/fail_translations_malformed.rs
+  |
+  |     let _ = translation!(Language::ES, vec![""]);
+  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the macro `translation` (in Nightly builds, run with -Z macro-backtrace for more info)

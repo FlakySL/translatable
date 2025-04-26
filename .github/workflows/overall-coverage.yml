@@ -1,0 +1,48 @@
+name: Overall coverage upload on main
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set-up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set-up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - name: Install cargo-llvm-cov
+        run: |
+          cargo binstall cargo-llvm-cov
+
+      - name: Generate coverage and get percentage
+        id: coverage
+        run: |
+          make cov export-lcov=1 | tee output.log
+          coverage=$(grep 'Total Coverage: ' output.log | awk '{print $3}')
+          echo "coverage_percentage=${coverage%\%}" >> $GITHUB_OUTPUT
+          echo "Detected coverage: ${coverage}"
+
+      - name: Fail if overall coverage is below 80%
+        run: |
+          if (( $(echo "${{ steps.coverage.outputs.coverage_percentage }} < 80" | bc -l) )); then
+            echo "❌ Coverage is below 80% (${{ steps.coverage.outputs.coverage_percentage }}%)"
+            exit 1
+          else
+            echo "✅ Coverage meets requirement (${{ steps.coverage.outputs.coverage_percentage }}%)"
+          fi
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage.lcov

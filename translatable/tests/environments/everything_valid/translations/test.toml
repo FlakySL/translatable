@@ -1,0 +1,16 @@
+
+# test no templates in string.
+[greetings.formal]
+es = "Bueno conocerte."
+en = "Nice to meet you."
+
+# test single template in string.
+[greetings.informal]
+es = "Hey {user}, todo bien?"
+en = "What's good {user}?"
+
+# test multiple templates in same string.
+[auditory.actions.delete_user]
+es = "{author} ha borrado al usuario {target}."
+en = "{author} deleted the user {target}."
+

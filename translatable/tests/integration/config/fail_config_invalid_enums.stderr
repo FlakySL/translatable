@@ -1,0 +1,7 @@
+error: Couldn't parse configuration entry '49854835093459fjkdjfkj' for 'overlap'
+ --> tests/integration/config/fail_config_invalid_enums.rs
+  |
+  |     let _ = translation!(Language::ES, vec![""]);
+  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the macro `translation` (in Nightly builds, run with -Z macro-backtrace for more info)
