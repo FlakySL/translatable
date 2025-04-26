@@ -1,0 +1,47 @@
+name: Overall coverage upload on main
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set-up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Install cargo-llvm-cov
+        run: |
+          rustup component add llvm-tools-preview
+
+      - name: Generate Coverage Report
+        run: |
+          cargo llvm-cov --workspace --lcov > coverage.lcov
+
+      - name: Fail if overall coverage is below 80%
+        run: |
+          apt-get install lcov -y
+
+          coverage_percentage=$(lcov --summary coverage.lcov | grep "lines:" | awk '{print $2}' | sed 's/%//')
+
+          echo "Coverage Percentage: $coverage_percentage%"
+
+          if (( $(echo "$coverage_percentage < 80" | bc -l) )); then
+            echo "Coverage is below 80%. Failing the build."
+            exit 1
+          else
+            echo "Coverage is above 80%. Continuing."
+          fi
+
+      - name: Upload coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage.lcov
