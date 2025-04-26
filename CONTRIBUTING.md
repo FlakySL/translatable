@@ -26,6 +26,19 @@ you can use our [Discord channel](https://discord.gg/AJWFyps23a) at Flaky.
 
 We recommend using the issue templates provided in this repository.
 
+## Making Pull Requests
+
+Before adding a feature on your behalf, we'd rather for it to be evaluated
+in a issue before, we appreciate the time and effort our contributors have
+and we don't want to waste it, so we'd rather talk about your feature before
+you working on it.
+
+When submitting a pull request make sure the code you added is tested and
+documented, if it isn't you will be asked to document/test it before merging.
+
+To add tests please refer to the [testing documentation] on the tests folder
+in the `translatable` crate.
+
 ## Running Tests and Compiling the Project
 
 This project uses GNU [make](https://www.gnu.org/software/make/).
@@ -39,3 +52,5 @@ The Translatable community follows the [Rust Code of Conduct](https://www.rust-l
 For moderation issues or escalation, please contact Esteve or Luis at
 [moderation@flaky.es](mailto:moderation@flaky.es) rather than the Rust
 moderation team.
+
+[testing documentation]: ./translatable/tests/README.md
