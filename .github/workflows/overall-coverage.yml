@@ -15,9 +15,12 @@ jobs:
       - name: Set-up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install cargo-binstall@latest
+        uses: cargo-bins/cargo-binstall@main
+
       - name: Install cargo-llvm-cov
         run: |
-          cargo install cargo-llvm-cov
+          cargo binstall cargo-llvm-cov
           rustup component add llvm-tools-preview
 
       - name: Generate Coverage Report
