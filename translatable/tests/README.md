@@ -26,3 +26,11 @@ modules and annotated conditionally with `#[cfg(test)] #[test]`.
 Unitary testing is simpler, as it's only functions possessing functions usually from
 `translatable::shared`, each module should have its own file and every function
 in the module should be tested.
+
+## Running the tests
+
+This project uses make for some command recipes. You can run `make test` and it will
+test the application with the correct parameters.
+
+If you are using `cargo test` directly make sure to run the tests with `--test-threds=1`,
+there are locks in place so nothing happens, but to make sure you should do that anyway.
