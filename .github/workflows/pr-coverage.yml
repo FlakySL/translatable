@@ -17,8 +17,27 @@ jobs:
         with:
           tool: cargo-llvm-cov
 
-      - name: Fail if code coverage is below 80%
+      - name: Install cargo-llvm-cov
         run: |
-          cargo llvm-cov clean --workspace
-          cargo llvm-cov --workspace --lcov --fail-under-lines 80
+          rustup component add llvm-tools-preview
 
+      - name: Generate Coverage Report
+        run: |
+          cargo llvm-cov --workspace --lcov > coverage.lcov
+
+
+      - name: Fail if overall coverage is below 80%
+        run: |
+          apt-get install lcov -y
+
+          coverage_percentage=$(lcov --summary coverage.lcov | grep "lines:" | awk '{print $2}' | sed 's/%//')
+
+          echo "Coverage Percentage: $coverage_percentage%"
+
+          if (( $(echo "$coverage_percentage < 80" | bc -l) )); then
+            echo "Coverage is below 80%. Failing the build."
+            exit 1
+          else
+            echo "Coverage is above 80%. Continuing."
+            exit 0
+          fi
