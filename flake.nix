@@ -16,7 +16,7 @@
 
         # Determine the Rust toolchain
         toolchain = with fenix.packages.${system};
-          if builtins.pathExists toolchainToml then
+          (if builtins.pathExists toolchainToml then
             fromToolchainFile {
               file = toolchainToml;
               sha256 = "sha256-X/4ZBHO3iW0fOenQ3foEvscgAPJYl2abspaBThDOukI=";
@@ -29,13 +29,14 @@
               complete.rustfmt
               stable.clippy
               stable.rust-analyzer
-            ];
+              stable.llvm-tools-preview
+            ]);
 
         # Override the toolchain in crane
         craneLib = crane.overrideToolchain toolchain;
       in {
         devShells.default = craneLib.devShell {
-          packages = with pkgs; [ toolchain gnumake ];
+          packages = with pkgs; [ toolchain gnumake cargo-llvm-cov ];
 
           env = { LAZYVIM_RUST_DIAGNOSTICS = "bacon-ls"; };
         };

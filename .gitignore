@@ -1,3 +1,5 @@
 /target
 .bacon-locations
 .direnv
+
+**/*.lcov

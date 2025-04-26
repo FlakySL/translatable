@@ -15,35 +15,34 @@ jobs:
       - name: Set-up Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-binstall@latest
-        uses: cargo-bins/cargo-binstall@main
+      - name: Set-up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
 
       - name: Install cargo-llvm-cov
         run: |
           cargo binstall cargo-llvm-cov
-          rustup component add llvm-tools-preview
 
-      - name: Generate Coverage Report
+      - name: Generate coverage and get percentage
+        id: coverage
         run: |
-          cargo llvm-cov --workspace --lcov > coverage.lcov -- --nocapture --test-threads=1 --color=always
+          make cov export-lcov=1 | tee output.log
+          coverage=$(grep 'Total Coverage: ' output.log | awk '{print $3}')
+          echo "coverage_percentage=${coverage%\%}" >> $GITHUB_OUTPUT
+          echo "Detected coverage: ${coverage}"
 
       - name: Fail if overall coverage is below 80%
         run: |
-          sudo apt-get install lcov -y
-
-          coverage_percentage=$(lcov --summary coverage.lcov | grep "lines:" | awk '{print $2}' | sed 's/%//')
-
-          echo "Coverage Percentage: $coverage_percentage%"
-
-          if (( $(echo "$coverage_percentage < 80" | bc -l) )); then
-            echo "Coverage is below 80%. Failing the build."
+          if (( $(echo "${{ steps.coverage.outputs.coverage_percentage }} < 80" | bc -l) )); then
+            echo "❌ Coverage is below 80% (${{ steps.coverage.outputs.coverage_percentage }}%)"
             exit 1
           else
-            echo "Coverage is above 80%. Continuing."
+            echo "✅ Coverage meets requirement (${{ steps.coverage.outputs.coverage_percentage }}%)"
           fi
 
       - name: Upload coverage to Codecov
-        if: success()
         uses: codecov/codecov-action@v3
         with:
           file: coverage.lcov
