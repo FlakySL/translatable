@@ -14,6 +14,8 @@ jobs:
 
       - name: Set-up Rust
         uses: actions-rs/toolchain@v1
+        with:
+          override: true
 
       - name: Install cargo-llvm-cov
         run: |
