@@ -21,6 +21,9 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
 
+      - name: Install cargo-binstall@latest
+        uses: cargo-bins/cargo-binstall@main
+
       - name: Install cargo-llvm-cov
         run: |
           cargo binstall cargo-llvm-cov
