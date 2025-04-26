@@ -1,0 +1,73 @@
+name: publish to crates.io
+
+on:
+  workflow_run:
+    workflows: ["tests"]
+    types:
+      - completed
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set-up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Set-up semver
+        run: |
+          curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+          sudo apt install -y nodejs
+          npm install -g semver
+
+      - name: Get crate version
+        id: crate_version
+        run: |
+          VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get latest git tag
+        id: latest_tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 || echo "")
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Install guile and guile-semver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y guile-semver
+
+      - name: Compare versions
+        id: should_publish
+        run: |
+          VERSION="${{ steps.crate_version.outputs.version }}"
+          TAG="${{ steps.latest_tag.outputs.tag }}"
+
+          if semver -r gt "$VERSION" "$TAG"; then
+            echo "publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "publish=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to crates.io
+        if: steps.should_publish.outputs.publish == 'true'
+        run: |
+          cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+      - name: Crate and push new git tag
+        if: steps.should_publish.outputs.publish == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.crate_version.outputs.version }}
+          git push origin ${{ steps.crate_version.outputs.version }}
+
