@@ -24,7 +24,7 @@ jobs:
 
       - name: Generate Coverage Report
         run: |
-          cargo llvm-cov --workspace --lcov > coverage.lcov
+          cargo llvm-cov --workspace --lcov > coverage.lcov -- --nocapture --test-threads=1 --color=always
 
       - name: Fail if overall coverage is below 80%
         run: |
