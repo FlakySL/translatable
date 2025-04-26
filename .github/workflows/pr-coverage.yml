@@ -14,8 +14,6 @@ jobs:
 
       - name: Set-up Rust
         uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
 
       - name: Install cargo-llvm-cov
         run: |
@@ -25,7 +23,6 @@ jobs:
       - name: Generate Coverage Report
         run: |
           cargo llvm-cov --workspace --lcov > coverage.lcov -- --nocapture --test-threads=1 --color=always
-
 
       - name: Fail if overall coverage is below 80%
         run: |
