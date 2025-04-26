@@ -26,7 +26,7 @@ jobs:
 
       - name: Fail if overall coverage is below 80%
         run: |
-          apt-get install lcov -y
+          sudo apt-get install lcov -y
 
           coverage_percentage=$(lcov --summary coverage.lcov | grep "lines:" | awk '{print $2}' | sed 's/%//')
 
