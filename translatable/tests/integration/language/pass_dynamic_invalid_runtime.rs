@@ -1,5 +1,5 @@
 #[allow(unused_imports)] // trybuild
-use translatable::{translation, Language};
+use translatable::{Language, translation};
 
 #[cfg(test)]
 #[test]

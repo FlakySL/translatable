@@ -173,7 +173,11 @@ impl FromStr for FormatString {
                         parse_str::<Ident>(&key)
                             .map_err(|_| TemplateError::InvalidIdent(key))?
                             .to_string(),
-                        char_to_byte[open_idx]..char_to_byte[char_idx + 1], // inclusive
+                        char_to_byte[open_idx]
+                            ..char_to_byte
+                                .get(char_idx + 1)
+                                .copied()
+                                .unwrap_or_else(|| s.len()),
                     ));
 
                     last_bracket_idx = None;

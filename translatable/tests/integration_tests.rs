@@ -1,16 +1,8 @@
-use std::env::remove_var;
-use std::env::set_var;
+use std::env::{remove_var, set_var};
 use std::fs::canonicalize;
 use std::sync::Mutex;
-use trybuild::TestCases;
 
-// so dynamic tests also run.
-#[allow(unused_imports)]
-use integration::language::*;
-#[allow(unused_imports)]
-use integration::path::*;
-#[allow(unused_imports)]
-use integration::templates::*;
+use trybuild::TestCases;
 
 mod integration;
 
@@ -38,8 +30,7 @@ unsafe fn set_locales_env(env: &str) {
     unsafe {
         set_var(
             PATH_ENV,
-            canonicalize(format!("./tests/environments/{env}/translations/"))
-                .unwrap()
+            canonicalize(format!("./tests/environments/{env}/translations/")).unwrap(),
         );
     }
 }

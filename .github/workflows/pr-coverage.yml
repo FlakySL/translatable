@@ -1,0 +1,24 @@
+name: PR Coverage check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set-up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Fail if code coverage is below 80%
+        run: |
+          cargo llvm-cov clean --workspace
+          cargo llvm-cov --workspace --lcov --fail-under-lines 80
+

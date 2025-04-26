@@ -8,7 +8,7 @@ pub fn pass_dynamic_expr() {
         "es".parse().expect("Expected language parsing to be OK"),
         static greetings::formal
     )
-        .expect("Expected translation generation to be OK");
+    .expect("Expected translation generation to be OK");
 
     assert_eq!(translation, "Bueno conocerte.");
 }
