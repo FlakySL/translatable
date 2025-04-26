@@ -15,6 +15,7 @@ jobs:
       - name: Set-up Rust
         uses: actions-rs/toolchain@v1
         with:
+          toolchain: stable
           tool: cargo-llvm-cov
 
       - name: Install cargo-llvm-cov
