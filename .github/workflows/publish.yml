@@ -49,7 +49,7 @@ jobs:
             TAG="0.0.0"
           fi
 
-          if semver -r gt "$VERSION" "$TAG"; then
+          if semver -r "> $TAG" "$VERSION"; then
             echo "publish=true" >> $GITHUB_OUTPUT
           else
             echo "publish=false" >> $GITHUB_OUTPUT
