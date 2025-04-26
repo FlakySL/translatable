@@ -24,6 +24,7 @@
           else
             combine [
               stable.rustc
+              stable.rust-src
               stable.cargo
               complete.rustfmt
               stable.clippy
