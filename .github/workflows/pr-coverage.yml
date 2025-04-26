@@ -16,10 +16,10 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          tool: cargo-llvm-cov
 
       - name: Install cargo-llvm-cov
         run: |
+          cargo install cargo-llvm-cov
           rustup component add llvm-tools-preview
 
       - name: Generate Coverage Report
