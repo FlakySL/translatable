@@ -7,6 +7,8 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
 
     steps:
       - name: Checkout code
