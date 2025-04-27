@@ -25,6 +25,9 @@ pub use error::RuntimeError as Error;
 #[rustfmt::skip]
 pub use translatable_proc::translation;
 
+#[rustfmt::skip]
+pub use translatable_proc::translation_context;
+
 /// Language enum re-export.
 ///
 /// This `use` statement re-exports
