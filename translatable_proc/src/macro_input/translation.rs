@@ -92,10 +92,7 @@ impl Parse for TranslationMacroArgs {
         input.parse::<Token![,]>()?;
 
         let parsed_path_arg = match input.parse::<Static>() {
-            Ok(_) => InputType::Static(
-                input
-                    .parse::<TranslationPath>()?
-            ),
+            Ok(_) => InputType::Static(input.parse::<TranslationPath>()?),
 
             Err(_) => InputType::Dynamic(
                 input

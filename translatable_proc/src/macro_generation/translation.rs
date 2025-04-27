@@ -14,8 +14,8 @@ use translatable_shared::macros::collections::{map_to_tokens, map_transform_to_t
 use translatable_shared::misc::language::Language;
 
 use crate::data::translations::load_translations;
-use crate::macro_input::utils::input_type::InputType;
 use crate::macro_input::translation::TranslationMacroArgs;
+use crate::macro_input::utils::input_type::InputType;
 
 /// Macro compile-time translation resolution error.
 ///
