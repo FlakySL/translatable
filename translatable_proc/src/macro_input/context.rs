@@ -1,8 +1,10 @@
 use proc_macro2::Span;
-use syn::{braced, Ident, Path, PathArguments, Result as SynResult, Token};
+use syn::{braced, Ident, Result as SynResult, Token};
 use syn::parse::{Parse, ParseStream};
 use thiserror::Error;
 use translatable_shared::macros::errors::IntoCompileError;
+
+use super::utils::translation_path::TranslationPath;
 
 #[derive(Error, Debug)]
 enum ContextMacroArgsError {
@@ -13,7 +15,7 @@ enum ContextMacroArgsError {
     NotAStruct
 }
 
-pub struct ContextMacroArgs {
+pub struct ContextMacroStruct {
     is_pub: bool,
     ident: String,
     fields: Vec<ContextMacroPathField>,
@@ -21,7 +23,7 @@ pub struct ContextMacroArgs {
 
 pub struct ContextMacroPathField {
     is_pub: bool,
-    path: Vec<String>,
+    path: TranslationPath,
     ident: String,
 }
 
@@ -39,22 +41,13 @@ impl Parse for ContextMacroPathField {
 
         input.parse::<Token![:]>()?;
 
-        let path = input.parse::<Path>()?
-            .segments
-            .iter()
-            .map(|segment| match &segment.arguments {
-                PathArguments::None => Ok(segment.ident.to_string()),
-
-                other => Err(ContextMacroArgsError::InvalidPathContainsGenerics
-                    .to_syn_error(other)),
-            })
-            .collect::<Result<Vec<String>, _>>()?;
+        let path = input.parse::<TranslationPath>()?;
 
         Ok(Self { is_pub, path, ident })
     }
 }
 
-impl Parse for ContextMacroArgs {
+impl Parse for ContextMacroStruct {
     fn parse(input: ParseStream) -> SynResult<Self> {
         let mut is_pub = false;
 

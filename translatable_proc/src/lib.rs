@@ -7,7 +7,7 @@
 //! The `translatable` library re-exports the macros
 //! declared in this crate.
 
-use macro_input::context::ContextMacroArgs;
+use macro_input::context::ContextMacroStruct;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_macro_input;
@@ -68,7 +68,7 @@ pub fn translation(input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn translation_context(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    parse_macro_input!(item as ContextMacroArgs);
+    parse_macro_input!(item as ContextMacroStruct);
 
     quote! { struct Name {} }.into()
 }

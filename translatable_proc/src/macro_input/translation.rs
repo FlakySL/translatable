@@ -12,12 +12,13 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::parse::{Parse, ParseStream};
 use syn::token::Static;
-use syn::{Expr, ExprLit, Ident, Lit, Path, PathArguments, Result as SynResult, Token};
+use syn::{Expr, ExprLit, Ident, Lit, Result as SynResult, Token};
 use thiserror::Error;
 use translatable_shared::macros::errors::IntoCompileError;
 use translatable_shared::misc::language::Language;
 
-use super::input_type::InputType;
+use super::utils::input_type::InputType;
+use super::utils::translation_path::TranslationPath;
 
 /// Parse error for [`TranslationMacroArgs`].
 ///
@@ -30,13 +31,6 @@ enum TranslationMacroArgsError {
     /// was found.
     #[error("The literal '{0}' is an invalid ISO 639-1 string, and cannot be parsed")]
     InvalidIsoLiteral(String),
-
-    /// Extra tokens were found while parsing a static path for
-    /// the [`translation!()`] macro, specifically generic arguments.
-    ///
-    /// [`translation!()`]: crate::translation
-    #[error("This translation path contains generic arguments, and cannot be parsed")]
-    InvalidPathContainsGenerics,
 }
 
 /// [`translation!()`] macro input arguments.
@@ -63,7 +57,7 @@ pub struct TranslationMacroArgs {
     /// as `static path::to::translation` or dynamic if
     /// it's another expression, this way represented as a
     /// [`TokenStream2`].
-    path: InputType<Vec<String>>,
+    path: InputType<TranslationPath>,
 
     /// Stores the replacement arguments for the translation
     /// templates such as `Hello {name}` if found on a translation.
@@ -98,23 +92,10 @@ impl Parse for TranslationMacroArgs {
         input.parse::<Token![,]>()?;
 
         let parsed_path_arg = match input.parse::<Static>() {
-            Ok(_) => {
-                let language_arg = input
-                    .parse::<Path>()?
-                    .segments
-                    .into_iter()
-                    .map(|segment| match segment.arguments {
-                        PathArguments::None => Ok(segment
-                            .ident
-                            .to_string()),
-
-                        other => Err(TranslationMacroArgsError::InvalidPathContainsGenerics
-                            .to_syn_error(other)),
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-
-                InputType::Static(language_arg)
-            },
+            Ok(_) => InputType::Static(
+                input
+                    .parse::<TranslationPath>()?
+            ),
 
             Err(_) => InputType::Dynamic(
                 input
@@ -172,7 +153,7 @@ impl TranslationMacroArgs {
     /// A reference to `self.path` as [`InputType<Vec<String>>`]
     #[inline]
     #[allow(unused)]
-    pub fn path(&self) -> &InputType<Vec<String>> {
+    pub fn path(&self) -> &InputType<TranslationPath> {
         &self.path
     }
 

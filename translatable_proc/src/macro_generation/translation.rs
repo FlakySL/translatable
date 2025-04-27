@@ -14,7 +14,7 @@ use translatable_shared::macros::collections::{map_to_tokens, map_transform_to_t
 use translatable_shared::misc::language::Language;
 
 use crate::data::translations::load_translations;
-use crate::macro_input::input_type::InputType;
+use crate::macro_input::utils::input_type::InputType;
 use crate::macro_input::translation::TranslationMacroArgs;
 
 /// Macro compile-time translation resolution error.
@@ -76,10 +76,11 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
 
     if let InputType::Static(language) = input.language() {
         if let InputType::Static(path) = input.path() {
-            let static_path_display = path.join("::");
+            let path_segments = path.segments();
+            let static_path_display = path_segments.join("::");
 
             let translation_object = translations
-                .find_path(path)
+                .find_path(path_segments)
                 .ok_or_else(|| MacroCompileError::PathNotFound(static_path_display.clone()));
 
             let translation = handle_macro_result!(
@@ -111,17 +112,18 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
 
     let translation_object = match input.path() {
         InputType::Static(path) => {
-            let static_path_display = path.join("::");
+            let path_segments = path.segments();
+            let static_path_display = path_segments.join("::");
 
             let translation_object = translations
-                .find_path(path)
+                .find_path(path_segments)
                 .ok_or_else(|| MacroCompileError::PathNotFound(static_path_display.clone()));
 
             let translations_tokens = map_to_tokens(handle_macro_result!(translation_object));
 
             quote! {
                 #[doc(hidden)]
-                let path: Vec<_> = vec![#(#path.to_string()),*];
+                let path: Vec<_> = vec![#(#path_segments.to_string()),*];
 
                 #translations_tokens
             }
