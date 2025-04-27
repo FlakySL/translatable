@@ -3,6 +3,7 @@ name: tests
 on:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
   coverage:
@@ -11,9 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set-up Rust
-        uses: dtolnay/rust-toolchain@stable
 
       - name: Set-up Rust
         uses: dtolnay/rust-toolchain@stable
