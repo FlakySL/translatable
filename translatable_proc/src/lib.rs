@@ -70,7 +70,7 @@ pub fn translation(input: TokenStream) -> TokenStream {
 pub fn translation_context(attr: TokenStream, item: TokenStream) -> TokenStream {
     context_macro(
         parse_macro_input!(attr as ContextMacroArgs),
-        parse_macro_input!(item as ContextMacroStruct)
+        parse_macro_input!(item as ContextMacroStruct),
     )
-        .into()
+    .into()
 }

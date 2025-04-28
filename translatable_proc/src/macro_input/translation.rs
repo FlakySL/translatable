@@ -26,7 +26,7 @@ use super::utils::translation_path::TranslationPath;
 /// macro input. This error is only used while parsing compile-time input,
 /// as runtime input is validated in runtime.
 #[derive(Error, Debug)]
-enum TranslationMacroArgsError {
+enum MacroArgsError {
     /// An error while parsing a compile-time String value
     /// was found.
     #[error("The literal '{0}' is an invalid ISO 639-1 string, and cannot be parsed")]
@@ -81,7 +81,7 @@ impl Parse for TranslationMacroArgs {
                 {
                     Ok(language) => InputType::Static(language),
 
-                    Err(_) => Err(TranslationMacroArgsError::InvalidIsoLiteral(literal.value())
+                    Err(_) => Err(MacroArgsError::InvalidIsoLiteral(literal.value())
                         .to_syn_error(literal))?,
                 }
             },

@@ -1,129 +1,95 @@
-use proc_macro2::Span;
-use syn::parse::{Parse, ParseStream};
-use syn::{Ident, Result as SynResult, Token, braced};
+use syn::{parse::{Parse, ParseStream}, Field, Ident, ItemStruct, Result as SynResult, Type, Visibility, Error as SynError};
 use thiserror::Error;
 use translatable_shared::macros::errors::IntoCompileError;
 
 use super::utils::translation_path::TranslationPath;
 
 #[derive(Error, Debug)]
-enum ContextMacroArgsError {
-    #[error("This macro must be applied on a struct")]
-    NotAStruct,
+enum MacroArgsError {
+    #[error("Only named fields are allowed")]
+    InvalidFieldType
 }
 
 pub struct ContextMacroArgs(Option<TranslationPath>);
 
-pub struct ContextMacroStruct {
-    is_pub: bool,
-    ident: String,
-    fields: Vec<ContextMacroPathField>,
-}
-
-pub struct ContextMacroPathField {
-    is_pub: bool,
+pub struct ContextMacroField {
     path: TranslationPath,
-    ident: String,
+    is_pub: Visibility,
+    ident: Ident,
+    ty: Type
 }
 
-impl Parse for ContextMacroPathField {
+pub struct ContextMacroStruct {
+    is_pub: Visibility,
+    ident: Ident,
+    fields: Vec<ContextMacroField>
+}
+
+impl Parse for ContextMacroArgs {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        let mut is_pub = false;
+        Ok(Self(
+            if !input.is_empty() {
+                Some(input.parse::<TranslationPath>()?)
+            } else {
+                None
+            }
+        ))
+    }
+}
 
-        if input.peek(Token![pub]) {
-            input.parse::<Token![pub]>()?;
-            is_pub = true;
-        }
+impl TryFrom<Field> for ContextMacroField {
+    type Error = SynError;
 
-        let ident = input
-            .parse::<Ident>()?
-            .to_string();
+    fn try_from(field: Field) -> Result<Self, Self::Error> {
+        let path = field
+            .attrs
+            .iter()
+            .find(|field| field.path().is_ident("path"))
+            .map(|field| field.parse_args::<TranslationPath>())
+            .transpose()?
+            .unwrap_or_else(|| TranslationPath::default());
 
-        input.parse::<Token![:]>()?;
+        let is_pub = field
+            .vis
+            .clone();
 
-        let path = input.parse::<TranslationPath>()?;
+        let ident = field
+            .ident
+            .clone()
+            .ok_or(
+                MacroArgsError::InvalidFieldType
+                    .to_syn_error(&field)
+            )?;
 
-        Ok(Self { is_pub, path, ident })
+        let ty = field
+            .ty;
+
+        Ok(Self {
+            path,
+            is_pub,
+            ident,
+            ty
+        })
     }
 }
 
 impl Parse for ContextMacroStruct {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        let mut is_pub = false;
+        let structure = input.parse::<ItemStruct>()?;
 
-        if input.peek(Token![pub]) {
-            input.parse::<Token![pub]>()?;
-            is_pub = true;
-        }
+        let is_pub = structure.vis;
+        let ident = structure.ident;
 
-        if !input.peek(Token![struct]) {
-            let dummy_ident = Ident::new("_", Span::call_site());
-            return Err(ContextMacroArgsError::NotAStruct.to_syn_error(dummy_ident));
-        }
-
-        input.parse::<Token![struct]>()?;
-
-        let ident = input
-            .parse::<Ident>()?
-            .to_string();
-
-        let content;
-        braced!(content in input);
-
-        let fields = content
-            .parse_terminated(ContextMacroPathField::parse, Token![,])?
+        let fields = structure
+            .fields
             .into_iter()
-            .collect::<Vec<_>>();
+            .map(|field| ContextMacroField::try_from(field))
+            .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Self { is_pub, ident, fields })
-    }
-}
-
-impl Parse for ContextMacroArgs {
-    fn parse(input: ParseStream) -> SynResult<Self> {
-        let path = input.parse::<TranslationPath>()
-            .ok();
-
-        Ok(ContextMacroArgs(path))
-    }
-}
-
-impl ContextMacroStruct {
-    #[inline]
-    #[allow(unused)]
-    pub fn is_pub(&self) -> bool {
-        self.is_pub
-    }
-
-    #[inline]
-    #[allow(unused)]
-    pub fn ident(&self) -> &str {
-        &self.ident
-    }
-
-    #[inline]
-    #[allow(unused)]
-    pub fn fields(&self) -> &[ContextMacroPathField] {
-        &self.fields
-    }
-}
-
-impl ContextMacroPathField {
-    #[inline]
-    #[allow(unused)]
-    pub fn is_pub(&self) -> bool {
-        self.is_pub
-    }
-
-    #[inline]
-    #[allow(unused)]
-    pub fn path(&self) -> &TranslationPath {
-        &self.path
-    }
-
-    #[inline]
-    #[allow(unused)]
-    pub fn ident(&self) -> &str {
-        &self.ident
+        Ok(Self {
+            is_pub,
+            ident,
+            fields
+        })
     }
 }

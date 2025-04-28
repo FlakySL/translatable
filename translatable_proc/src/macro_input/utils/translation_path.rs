@@ -32,6 +32,15 @@ impl Parse for TranslationPath {
     }
 }
 
+impl Default for TranslationPath {
+    fn default() -> Self {
+        Self {
+            segments: Vec::new(),
+            span: Span::call_site()
+        }
+    }
+}
+
 impl TranslationPath {
     #[inline]
     #[allow(unused)]
