@@ -9,16 +9,14 @@ use crate::data::translations::load_translations;
 use crate::macro_input::context::{ContextMacroArgs, ContextMacroStruct};
 
 #[derive(Error, Debug)]
-enum MacroCompileError {
-
-}
+enum MacroCompileError {}
 
 macro_rules! pub_token {
     ($input:expr) => {
         if $input {
             quote! { pub }
         } else {
-            quote! { }
+            quote! {}
         }
     };
 }
@@ -37,10 +35,8 @@ pub fn context_macro(base_path: ContextMacroArgs, macro_input: ContextMacroStruc
     let translations = macro_input
         .fields()
         .iter()
-        .map(|field| (
-            field.is_pub(),
-            field.ident(),
-            {
+        .map(|field| {
+            (field.is_pub(), field.ident(), {
                 let path_segments = field
                     .path()
                     .segments()
@@ -52,8 +48,8 @@ pub fn context_macro(base_path: ContextMacroArgs, macro_input: ContextMacroStruc
                     .collect();
 
                 translations.find_path(&path)
-            }
-        ))
+            })
+        })
         .collect::<Vec<_>>();
 
     let struct_fields = macro_input
@@ -62,10 +58,7 @@ pub fn context_macro(base_path: ContextMacroArgs, macro_input: ContextMacroStruc
         .map(|field| {
             let pub_token = pub_token!(field.is_pub());
 
-            let ident = Ident::new(
-                field.ident(),
-                Span::call_site()
-            );
+            let ident = Ident::new(field.ident(), Span::call_site());
 
             quote! { #pub_token #ident: String }
         });
@@ -75,10 +68,7 @@ pub fn context_macro(base_path: ContextMacroArgs, macro_input: ContextMacroStruc
         .map(|(is_pub, ident, translation)| {
             let pub_token = pub_token!(*is_pub);
 
-            let ident = Ident::new(
-                ident,
-                Span::call_site()
-            );
+            let ident = Ident::new(ident, Span::call_site());
 
             let templated_ident = format_ident!("templated_{ident}");
 

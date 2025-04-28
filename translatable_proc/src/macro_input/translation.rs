@@ -73,21 +73,22 @@ pub struct TranslationMacroArgs {
 /// with the [`parse_macro_input`] macro.
 impl Parse for TranslationMacroArgs {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        let parsed_language_arg = match input.parse::<Expr>()? {
-            Expr::Lit(ExprLit { lit: Lit::Str(literal), .. }) => {
-                match literal
-                    .value()
-                    .parse::<Language>()
-                {
-                    Ok(language) => InputType::Static(language),
+        let parsed_language_arg =
+            match input.parse::<Expr>()? {
+                Expr::Lit(ExprLit { lit: Lit::Str(literal), .. }) => {
+                    match literal
+                        .value()
+                        .parse::<Language>()
+                    {
+                        Ok(language) => InputType::Static(language),
 
-                    Err(_) => Err(MacroArgsError::InvalidIsoLiteral(literal.value())
-                        .to_syn_error(literal))?,
-                }
-            },
+                        Err(_) => Err(MacroArgsError::InvalidIsoLiteral(literal.value())
+                            .to_syn_error(literal))?,
+                    }
+                },
 
-            other => InputType::Dynamic(other.into_token_stream()),
-        };
+                other => InputType::Dynamic(other.into_token_stream()),
+            };
 
         input.parse::<Token![,]>()?;
 

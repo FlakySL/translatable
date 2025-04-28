@@ -1,4 +1,5 @@
-use syn::{parse::{Parse, ParseStream}, Field, Ident, ItemStruct, Result as SynResult, Type, Visibility, Error as SynError};
+use syn::parse::{Parse, ParseStream};
+use syn::{Error as SynError, Field, Ident, ItemStruct, Result as SynResult, Type, Visibility};
 use thiserror::Error;
 use translatable_shared::macros::errors::IntoCompileError;
 
@@ -7,7 +8,7 @@ use super::utils::translation_path::TranslationPath;
 #[derive(Error, Debug)]
 enum MacroArgsError {
     #[error("Only named fields are allowed")]
-    InvalidFieldType
+    InvalidFieldType,
 }
 
 pub struct ContextMacroArgs(Option<TranslationPath>);
@@ -16,24 +17,44 @@ pub struct ContextMacroField {
     path: TranslationPath,
     is_pub: Visibility,
     ident: Ident,
-    ty: Type
+    ty: Type,
 }
 
 pub struct ContextMacroStruct {
     is_pub: Visibility,
     ident: Ident,
-    fields: Vec<ContextMacroField>
+    fields: Vec<ContextMacroField>,
 }
 
 impl Parse for ContextMacroArgs {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        Ok(Self(
-            if !input.is_empty() {
-                Some(input.parse::<TranslationPath>()?)
-            } else {
-                None
-            }
-        ))
+        Ok(Self(if !input.is_empty() { Some(input.parse::<TranslationPath>()?) } else { None }))
+    }
+}
+
+impl ContextMacroField {
+    #[inline]
+    #[allow(unused)]
+    pub fn path(&self) -> &TranslationPath {
+        &self.path
+    }
+
+    #[inline]
+    #[allow(unused)]
+    pub fn is_pub(&self) -> &Visibility {
+        &self.is_pub
+    }
+
+    #[inline]
+    #[allow(unused)]
+    pub fn ident(&self) -> &Ident {
+        &self.ident
+    }
+
+    #[inline]
+    #[allow(unused)]
+    pub fn ty(&self) -> &Type {
+        &self.ty
     }
 }
 
@@ -44,7 +65,11 @@ impl TryFrom<Field> for ContextMacroField {
         let path = field
             .attrs
             .iter()
-            .find(|field| field.path().is_ident("path"))
+            .find(|field| {
+                field
+                    .path()
+                    .is_ident("path")
+            })
             .map(|field| field.parse_args::<TranslationPath>())
             .transpose()?
             .unwrap_or_else(|| TranslationPath::default());
@@ -56,20 +81,31 @@ impl TryFrom<Field> for ContextMacroField {
         let ident = field
             .ident
             .clone()
-            .ok_or(
-                MacroArgsError::InvalidFieldType
-                    .to_syn_error(&field)
-            )?;
+            .ok_or(MacroArgsError::InvalidFieldType.to_syn_error(&field))?;
 
-        let ty = field
-            .ty;
+        let ty = field.ty;
 
-        Ok(Self {
-            path,
-            is_pub,
-            ident,
-            ty
-        })
+        Ok(Self { path, is_pub, ident, ty })
+    }
+}
+
+impl ContextMacroStruct {
+    #[inline]
+    #[allow(unused)]
+    pub fn is_pub(&self) -> &Visibility {
+        &self.is_pub
+    }
+
+    #[inline]
+    #[allow(unused)]
+    pub fn ident(&self) -> &Ident {
+        &self.ident
+    }
+
+    #[inline]
+    #[allow(unused)]
+    pub fn fields(&self) -> &[ContextMacroField] {
+        &self.fields
     }
 }
 
@@ -86,10 +122,6 @@ impl Parse for ContextMacroStruct {
             .map(|field| ContextMacroField::try_from(field))
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Self {
-            is_pub,
-            ident,
-            fields
-        })
+        Ok(Self { is_pub, ident, fields })
     }
 }

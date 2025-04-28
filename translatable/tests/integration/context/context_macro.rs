@@ -1,4 +1,4 @@
-use translatable::{translation_context, Language};
+use translatable::{Language, translation_context};
 
 #[translation_context(base::path)]
 pub struct TestContext {

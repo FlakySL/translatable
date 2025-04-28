@@ -36,12 +36,21 @@ impl Default for TranslationPath {
     fn default() -> Self {
         Self {
             segments: Vec::new(),
-            span: Span::call_site()
+            span: Span::call_site(),
         }
     }
 }
 
 impl TranslationPath {
+    // TODO: merge spans (not yet in #19)
+    pub fn merge(&self, other: &TranslationPath) -> Vec<String> {
+        [
+            self.segments().to_vec(),
+            other.segments().to_vec()
+        ]
+            .concat()
+    }
+
     #[inline]
     #[allow(unused)]
     pub fn segments(&self) -> &Vec<String> {
