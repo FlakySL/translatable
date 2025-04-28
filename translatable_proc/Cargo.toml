@@ -15,7 +15,7 @@ proc-macro = true
 proc-macro2 = "1.0.95"
 quote = "1.0.38"
 strum = { version = "0.27.1", features = ["derive"] }
-syn = { version = "2.0.98", features = ["full"] }
+syn = { version = "2.0.101", features = ["full"] }
 thiserror = "2.0.11"
 toml = "0.8.20"
 translatable_shared = { version = "1", path = "../translatable_shared/" }
