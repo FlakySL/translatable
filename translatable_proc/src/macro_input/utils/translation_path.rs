@@ -3,6 +3,7 @@ use syn::parse::{Parse, ParseStream};
 use syn::spanned::Spanned;
 use syn::{Error as SynError, Path, PathArguments, Result as SynResult};
 
+#[derive(Clone)]
 pub struct TranslationPath {
     segments: Vec<String>,
     span: Span,
@@ -42,6 +43,10 @@ impl Default for TranslationPath {
 }
 
 impl TranslationPath {
+    pub fn new(segments: Vec<String>, span: Span) -> Self {
+        Self { segments, span }
+    }
+
     // TODO: merge spans (not yet in #19)
     pub fn merge(&self, other: &TranslationPath) -> Vec<String> {
         [

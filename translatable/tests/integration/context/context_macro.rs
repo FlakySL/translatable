@@ -6,7 +6,6 @@ use translatable::{Language, translation_context};
 pub struct TestContext {
     #[path(formal)]
     pub formal: String,
-    #[path(informal)]
     informal: String,
 }
 

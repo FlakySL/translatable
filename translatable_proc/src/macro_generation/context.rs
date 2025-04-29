@@ -35,7 +35,7 @@ pub fn context_macro(base_path: ContextMacroArgs, macro_input: ContextMacroStruc
             .iter()
             .map(|field| {
                 let path_segments = base_path
-                    .merge(field.path());
+                    .merge(&field.path());
 
                 let path_segments_display = path_segments
                     .join("::");

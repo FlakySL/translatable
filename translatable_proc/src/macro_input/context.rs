@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 use syn::parse::{Parse, ParseStream};
 use syn::{Error as SynError, Field, Ident, ItemStruct, Result as SynResult, Type, Visibility};
 use thiserror::Error;
@@ -14,7 +16,7 @@ enum MacroArgsError {
 pub struct ContextMacroArgs(Option<TranslationPath>);
 
 pub struct ContextMacroField {
-    path: TranslationPath,
+    path: Option<TranslationPath>,
     pub_state: Visibility,
     ident: Ident,
     ty: Type,
@@ -34,15 +36,32 @@ impl ContextMacroArgs {
 
 impl Parse for ContextMacroArgs {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        Ok(Self(if !input.is_empty() { Some(input.parse::<TranslationPath>()?) } else { None }))
+        Ok(Self(
+            input
+                .is_empty()
+                .not()
+                .then(|| input.parse())
+                .transpose()?
+        ))
     }
 }
 
 impl ContextMacroField {
     #[inline]
     #[allow(unused)]
-    pub fn path(&self) -> &TranslationPath {
-        &self.path
+    pub fn path(&self) -> TranslationPath {
+        self.path
+            .clone()
+            .unwrap_or_else(||
+                TranslationPath::new(
+                    vec![
+                        self.ident
+                            .to_string()
+                    ],
+                    self.ident
+                        .span()
+                )
+            )
     }
 
     #[inline]
@@ -77,8 +96,7 @@ impl TryFrom<Field> for ContextMacroField {
                     .is_ident("path")
             })
             .map(|field| field.parse_args::<TranslationPath>())
-            .transpose()?
-            .unwrap_or_else(|| TranslationPath::default());
+            .transpose()?;
 
         let is_pub = field
             .vis
