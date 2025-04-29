@@ -96,7 +96,7 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
 
             return quote! {
                 #translation
-                    .replace_with(#template_replacements)
+                    .replace_with(&#template_replacements)
             };
         }
     }
@@ -152,7 +152,7 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
                 #translation_object
                     .get(&language)
                     .ok_or_else(|| translatable::Error::LanguageNotAvailable(language, path.join("::")))?
-                    .replace_with(#template_replacements)
+                    .replace_with(&#template_replacements)
             })
         })()
     }

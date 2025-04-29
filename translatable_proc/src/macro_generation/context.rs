@@ -1,104 +1,85 @@
-use proc_macro2::{Span, TokenStream as TokenStream2};
-use quote::{format_ident, quote};
-use syn::Ident;
+use proc_macro2::TokenStream as TokenStream2;
+use quote::quote;
 use thiserror::Error;
 use translatable_shared::handle_macro_result;
 use translatable_shared::macros::collections::map_to_tokens;
 
 use crate::data::translations::load_translations;
 use crate::macro_input::context::{ContextMacroArgs, ContextMacroStruct};
+use crate::macro_input::utils::translation_path::TranslationPath;
 
 #[derive(Error, Debug)]
-enum MacroCompileError {}
-
-macro_rules! pub_token {
-    ($input:expr) => {
-        if $input {
-            quote! { pub }
-        } else {
-            quote! {}
-        }
-    };
+enum MacroCompileError {
+    #[error("A translation with the path '{0}' could not be found.")]
+    TranslationNotFound(String)
 }
 
 pub fn context_macro(base_path: ContextMacroArgs, macro_input: ContextMacroStruct) -> TokenStream2 {
     let translations = handle_macro_result!(load_translations());
+    let base_path = base_path.into_inner().unwrap_or_else(|| TranslationPath::default());
 
-    let pub_token = pub_token!(macro_input.is_pub());
-    let struct_ident = Ident::new(macro_input.ident(), Span::call_site());
-
-    let base_path = base_path
-        .or_empty()
-        .segments()
-        .to_vec();
-
-    let translations = macro_input
-        .fields()
-        .iter()
-        .map(|field| {
-            (field.is_pub(), field.ident(), {
-                let path_segments = field
-                    .path()
-                    .segments()
-                    .to_vec();
-
-                let path = base_path
-                    .iter()
-                    .chain(&path_segments)
-                    .collect();
-
-                translations.find_path(&path)
-            })
-        })
-        .collect::<Vec<_>>();
+    let struct_pub = macro_input.pub_state();
+    let struct_ident = macro_input.ident();
 
     let struct_fields = macro_input
         .fields()
         .iter()
         .map(|field| {
-            let pub_token = pub_token!(field.is_pub());
-
-            let ident = Ident::new(field.ident(), Span::call_site());
-
-            quote! { #pub_token #ident: String }
+            let field_ident = field.ident();
+            quote! { #field_ident: String }
         });
 
-    let field_impls = translations
-        .iter()
-        .map(|(is_pub, ident, translation)| {
-            let pub_token = pub_token!(*is_pub);
+    let loadable_translations = handle_macro_result!(
+        macro_input
+            .fields()
+            .iter()
+            .map(|field| {
+                let path_segments = base_path
+                    .merge(field.path());
 
-            let ident = Ident::new(ident, Span::call_site());
+                let path_segments_display = path_segments
+                    .join("::");
 
-            let templated_ident = format_ident!("templated_{ident}");
+                let translation = map_to_tokens(
+                    translations
+                        .find_path(&path_segments)
+                        .ok_or(MacroCompileError::TranslationNotFound(path_segments.join("::")))?,
+                );
 
-            let translation = translation
-                .map(|translation| map_to_tokens(translation))
-                .ok_or();
+                let ident = field.ident();
 
-            quote! {
-                #[inline]
-                #pub_token fn #templated_ident(language: &translatable::Language)
-                -> Option<translatable::shared::misc::templating::FormatString> {
-                    #translation
-                        .remove(language)
-                }
-
-                #[inline]
-                #pub_token fn #ident(language: &translatable::Language) -> Option<String> {
-                    Self::#templated_ident(language)
-                        .map(|lang| lang.replace_with(std::collections::HashMap::new()))
-                }
-            }
-        });
+                Ok(quote! {
+                    #ident: #translation
+                        .get(&language)
+                        .ok_or_else(|| translatable::Error::LanguageNotAvailable(
+                            language.clone(),
+                            #path_segments_display.to_string()
+                        ))?
+                        .replace_with(&replacements)
+                })
+            })
+            .collect::<Result<Vec<TokenStream2>, MacroCompileError>>()
+    );
 
     quote! {
-        #pub_token struct #struct_ident {
+        #struct_pub struct #struct_ident {
             #(#struct_fields),*
         }
 
         impl #struct_ident {
-            #(#field_impls)*
+            #struct_pub fn load_translations<K: ToString, V: ToString>(
+                language: translatable::Language,
+                replacements: &std::collections::HashMap<K, V>
+            ) -> Result<Self, translatable::Error> {
+                let replacements = replacements
+                    .iter()
+                    .map(|(key, value)| (key.to_string(), value.to_string()))
+                    .collect::<std::collections::HashMap<String, String>>();
+
+                Ok(Self {
+                    #(#loadable_translations),*
+                })
+            }
         }
     }
 }

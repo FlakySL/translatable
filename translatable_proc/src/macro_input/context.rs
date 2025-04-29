@@ -15,15 +15,21 @@ pub struct ContextMacroArgs(Option<TranslationPath>);
 
 pub struct ContextMacroField {
     path: TranslationPath,
-    is_pub: Visibility,
+    pub_state: Visibility,
     ident: Ident,
     ty: Type,
 }
 
 pub struct ContextMacroStruct {
-    is_pub: Visibility,
+    pub_state: Visibility,
     ident: Ident,
     fields: Vec<ContextMacroField>,
+}
+
+impl ContextMacroArgs {
+    pub fn into_inner(self) -> Option<TranslationPath> {
+        self.0
+    }
 }
 
 impl Parse for ContextMacroArgs {
@@ -41,8 +47,8 @@ impl ContextMacroField {
 
     #[inline]
     #[allow(unused)]
-    pub fn is_pub(&self) -> &Visibility {
-        &self.is_pub
+    pub fn pub_state(&self) -> &Visibility {
+        &self.pub_state
     }
 
     #[inline]
@@ -85,15 +91,15 @@ impl TryFrom<Field> for ContextMacroField {
 
         let ty = field.ty;
 
-        Ok(Self { path, is_pub, ident, ty })
+        Ok(Self { path, pub_state: is_pub, ident, ty })
     }
 }
 
 impl ContextMacroStruct {
     #[inline]
     #[allow(unused)]
-    pub fn is_pub(&self) -> &Visibility {
-        &self.is_pub
+    pub fn pub_state(&self) -> &Visibility {
+        &self.pub_state
     }
 
     #[inline]
@@ -122,6 +128,6 @@ impl Parse for ContextMacroStruct {
             .map(|field| ContextMacroField::try_from(field))
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Self { is_pub, ident, fields })
+        Ok(Self { pub_state: is_pub, ident, fields })
     }
 }

@@ -104,7 +104,7 @@ impl FormatString {
     ///
     /// **Returns**
     /// A copy of the original string with it's templates replaced.
-    pub fn replace_with(&self, values: HashMap<String, String>) -> String {
+    pub fn replace_with(&self, values: &HashMap<String, String>) -> String {
         let mut original = self
             .original
             .clone();
@@ -128,6 +128,10 @@ impl FormatString {
         }
 
         original
+    }
+
+    pub fn original(&self) -> &str {
+        &self.original
     }
 }
 

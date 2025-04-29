@@ -7,7 +7,7 @@ use translatable_shared::misc::templating::FormatString;
 pub fn does_not_replace_not_found() {
     let result = FormatString::from_str("Hello {name}")
         .expect("Format string to be valid.")
-        .replace_with(HashMap::new());
+        .replace_with(&HashMap::new());
 
     assert_eq!(result, "Hello {name}");
 }
@@ -16,7 +16,7 @@ pub fn does_not_replace_not_found() {
 pub fn replaces_single_template() {
     let result = FormatString::from_str("Hello {name}")
         .expect("Format string to be valid.")
-        .replace_with(HashMap::from([("name".into(), "Josh".into())]));
+        .replace_with(&HashMap::from([("name".into(), "Josh".into())]));
 
     assert_eq!(result, "Hello Josh");
 }
@@ -25,7 +25,7 @@ pub fn replaces_single_template() {
 pub fn replaces_multiple_templates() {
     let result = FormatString::from_str("Hello {name} how are you doing {day}?")
         .expect("Format string to be valid.")
-        .replace_with(HashMap::from([
+        .replace_with(&HashMap::from([
             ("name".into(), "Josh".into()),
             ("day".into(), "today".into()),
         ]));
@@ -37,7 +37,7 @@ pub fn replaces_multiple_templates() {
 pub fn replaces_mix_found_not_found() {
     let result = FormatString::from_str("Hello {name} how are you doing {day}?")
         .expect("Format string to be valid.")
-        .replace_with(HashMap::from([("name".into(), "Josh".into())]));
+        .replace_with(&HashMap::from([("name".into(), "Josh".into())]));
 
     assert_eq!(result, "Hello Josh how are you doing {day}?");
 }
@@ -53,7 +53,7 @@ pub fn fails_unclosed_template() {
 pub fn escapes_templates() {
     let result = FormatString::from_str("You write escaped templates like {{ this }}.")
         .expect("Format string to be valid.")
-        .replace_with(HashMap::from([("this".into(), "not replaced".into())]));
+        .replace_with(&HashMap::from([("this".into(), "not replaced".into())]));
 
     assert_eq!(result, "You write escaped templates like {{ this }}.")
 }
