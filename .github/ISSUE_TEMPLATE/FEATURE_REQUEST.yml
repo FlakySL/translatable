@@ -9,7 +9,7 @@ body:
       options:
         - label: I've checked existing issues and pull requests
           required: true
-        - label: I've read the [Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct)
+        - label: I've read the [Code of Conduct](https://github.com/FlakySL/translatable/blob/main/CODE_OF_CONDUCT.md)
           required: true
 
   - type: textarea

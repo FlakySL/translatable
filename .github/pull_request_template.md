@@ -1,11 +1,15 @@
+
 ## Pre-submission Checklist
+
 - [ ] I've checked existing issues and pull requests
-- [ ] I've read the [Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct)
-- [ ] I've tested my changes
+- [ ] I've read the [Code of Conduct](https://github.com/FlakySL/translatable/blob/main/CODE_OF_CONDUCT.md)
+- [ ] I've [implemented tests](https://github.com/FlakySL/translatable/blob/main/translatable/tests/README.md) for my changes
 - [ ] I've listed all my changes in the `Changes` section
 
 ## Changes
+
 -
 
 ## Linked Issues
+
 - fixes #<issue_number>
