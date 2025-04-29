@@ -11,18 +11,16 @@ contact_links:
       *Please check existing issues first!*
 
   - name: "⚖️ Code of Conduct"
-    url: https://www.rust-lang.org/policies/code-of-conduct
+    url: https://github.com/FlakySL/translatable/blob/main/CODE_OF_CONDUCT.md
     about: |
-      All community interactions must follow:
-      - Rust's Code of Conduct
-      - Project-specific guidelines
+      All community interactions must follow the project
+      code of conduct, which is based on the contributor covenant.
       *Required reading before participating*
 
   - name: "🚨 Moderation Contact"
-    url: mailto:esteve@memw.es
+    url: mailto:moderation@flaky.es
     about: |
       For urgent moderation issues:
       - Code of Conduct violations
       - Community safety concerns
       - Escalation requests
-      *Do NOT contact Rust moderation team*

@@ -1,9 +1,12 @@
 ![translatable-readme](https://github.com/user-attachments/assets/4994514f-bbcc-48ea-a086-32e684adcd3a)
 
-[![Crates.io](https://img.shields.io/crates/v/translatable)](https://crates.io/crates/translatable)
-[![Docs.rs](https://docs.rs/translatable/badge.svg)](https://docs.rs/translatable)
+[![Crates.io](https://badges.ws/crates/v/translatable)](https://crates.io/crates/translatable)
+[![License](https://badges.ws/crates/l/translatable)](https://docs.rs/translatable)
+[![Docs.rs](https://badges.ws/crates/docs/translatable)](https://docs.rs/translatable)
+[![Downloads](https://badges.ws/crates/dt/translatable)](https://docs.rs/translatable)
 [![Codecov](https://img.shields.io/codecov/c/github/FlakySL/translatable)](https://app.codecov.io/gh/FlakySL/translatable)
 ![tests](https://github.com/FlakySL/translatable/actions/workflows/overall-coverage.yml/badge.svg)
+[![discord](https://badges.ws/discord/online/1344769456731197450)](https://discord.gg/AJWFyps23a)
 
 A robust internationalization solution for Rust featuring compile-time validation, ISO 639-1 compliance, and TOML-based translation management.
 

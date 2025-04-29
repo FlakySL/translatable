@@ -73,4 +73,3 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag ${{ steps.crate_version.outputs.version }}
           git push origin ${{ steps.crate_version.outputs.version }}
-
