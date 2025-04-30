@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use translatable::{Language, translation_context};
 
-#[translation_context(greetings)]
+#[translation_context(base_path = greetings, fallback_language = "en")]
 pub struct TestContext {
     #[path(formal)]
     pub formal: String,

@@ -14,9 +14,12 @@ enum MacroCompileError {
     TranslationNotFound(String)
 }
 
-pub fn context_macro(base_path: ContextMacroArgs, macro_input: ContextMacroStruct) -> TokenStream2 {
+pub fn context_macro(macro_args: ContextMacroArgs, macro_input: ContextMacroStruct) -> TokenStream2 {
     let translations = handle_macro_result!(load_translations());
-    let base_path = base_path.into_inner().unwrap_or_else(|| TranslationPath::default());
+    let base_path = macro_args
+        .base_path()
+        .cloned()
+        .unwrap_or_else(|| TranslationPath::default());
 
     let struct_pub = macro_input.pub_state();
     let struct_ident = macro_input.ident();
