@@ -6,20 +6,20 @@ use translatable_shared::macros::collections::map_to_tokens;
 
 use crate::data::translations::load_translations;
 use crate::macro_input::context::{ContextMacroArgs, ContextMacroStruct};
-use crate::macro_input::utils::translation_path::TranslationPath;
 
 #[derive(Error, Debug)]
 enum MacroCompileError {
-    #[error("A translation with the path '{0}' could not be found.")]
-    TranslationNotFound(String)
+    #[error("A translation with the path '{0}' could not be found")]
+    TranslationNotFound(String),
+
+    #[error("One of the translations doesn't have the fallback language available")]
+    FallbackNotAvailable
 }
 
 pub fn context_macro(macro_args: ContextMacroArgs, macro_input: ContextMacroStruct) -> TokenStream2 {
-    let translations = handle_macro_result!(load_translations());
+    let translations = handle_macro_result!(out load_translations());
     let base_path = macro_args
-        .base_path()
-        .cloned()
-        .unwrap_or_else(|| TranslationPath::default());
+        .base_path();
 
     let struct_pub = macro_input.pub_state();
     let struct_ident = macro_input.ident();
@@ -32,7 +32,7 @@ pub fn context_macro(macro_args: ContextMacroArgs, macro_input: ContextMacroStru
             quote! { #field_ident: String }
         });
 
-    let loadable_translations = handle_macro_result!(
+    let loadable_translations = handle_macro_result!(out
         macro_input
             .fields()
             .iter()
@@ -43,26 +43,61 @@ pub fn context_macro(macro_args: ContextMacroArgs, macro_input: ContextMacroStru
                 let path_segments_display = path_segments
                     .join("::");
 
-                let translation = map_to_tokens(
-                    translations
-                        .find_path(&path_segments)
-                        .ok_or(MacroCompileError::TranslationNotFound(path_segments.join("::")))?,
-                );
+                let translation = translations
+                    .find_path(&path_segments)
+                    .ok_or(MacroCompileError::TranslationNotFound(path_segments.join("::")))?;
 
+                let translation_tokens = map_to_tokens(translation);
                 let ident = field.ident();
 
-                Ok(quote! {
-                    #ident: #translation
-                        .get(&language)
+                let handler = if let Some(fallback_language) = macro_args.fallback_language() {
+                    if let Some(translation) = translation.get(&fallback_language) {
+                        quote! {
+                            .unwrap_or(&#translation)
+                        }
+                    } else {
+                        return Err(MacroCompileError::FallbackNotAvailable);
+                    }
+                } else {
+                    quote! {
                         .ok_or_else(|| translatable::Error::LanguageNotAvailable(
                             language.clone(),
                             #path_segments_display.to_string()
                         ))?
+                    }
+                };
+
+                Ok(quote! {
+                    #ident: #translation_tokens
+                        .get(&language)
+                        #handler
                         .replace_with(&replacements)
                 })
             })
             .collect::<Result<Vec<TokenStream2>, MacroCompileError>>()
     );
+
+    let is_lang_some = macro_args.fallback_language().is_some();
+
+    let load_ret_ty = if is_lang_some {
+        quote! { Self }
+    } else {
+        quote! { Result<Self, translatable::Error> }
+    };
+
+    let load_ret_stmnt = if is_lang_some {
+        quote! {
+            Self {
+                #(#loadable_translations),*
+            }
+        }
+    } else {
+        quote! {
+            Ok(Self {
+                #(#loadable_translations),*
+            })
+        }
+    };
 
     quote! {
         #struct_pub struct #struct_ident {
@@ -73,15 +108,13 @@ pub fn context_macro(macro_args: ContextMacroArgs, macro_input: ContextMacroStru
             #struct_pub fn load_translations<K: ToString, V: ToString>(
                 language: translatable::Language,
                 replacements: &std::collections::HashMap<K, V>
-            ) -> Result<Self, translatable::Error> {
+            ) -> #load_ret_ty {
                 let replacements = replacements
                     .iter()
                     .map(|(key, value)| (key.to_string(), value.to_string()))
                     .collect::<std::collections::HashMap<String, String>>();
 
-                Ok(Self {
-                    #(#loadable_translations),*
-                })
+                #load_ret_stmnt
             }
         }
     }

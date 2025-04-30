@@ -1,4 +1,3 @@
-use std::ops::Not;
 use std::str::FromStr;
 
 use quote::ToTokens;
@@ -44,12 +43,19 @@ pub struct ContextMacroStruct {
 }
 
 impl ContextMacroArgs {
-    pub fn base_path(&self) -> Option<&TranslationPath> {
-        self.base_path.as_ref()
+    #[inline]
+    #[allow(unused)]
+    pub fn base_path(&self) -> TranslationPath {
+        self.base_path
+            .clone()
+            .unwrap_or_else(|| TranslationPath::default())
     }
 
-    pub fn fallback_language(&self) -> Option<&Language> {
-        self.fallback_language.as_ref()
+    #[inline]
+    #[allow(unused)]
+    pub fn fallback_language(&self) -> Option<Language> {
+        self.fallback_language
+            .clone()
     }
 }
 

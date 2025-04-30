@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use translatable::{Language, translation_context};
 
-#[translation_context(base_path = greetings, fallback_language = "en")]
+#[translation_context(base_path = greetings, fallback_language = "es")]
 pub struct TestContext {
     #[path(formal)]
     pub formal: String,
@@ -12,12 +12,11 @@ pub struct TestContext {
 #[test]
 fn test() {
     let translations = TestContext::load_translations(
-        Language::ES,
+        Language::AA,
         &HashMap::from([
             ("user", "John")
         ])
-    )
-        .expect("Translations should be able to load");
+    );
 
     assert_eq!(translations.informal, "Hey John, todo bien?");
     assert_eq!(translations.formal, "Bueno conocerte.")
