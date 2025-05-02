@@ -44,14 +44,6 @@ pub fn context_macro(
         .collect::<Result<Vec<_>, _>>()
     );
 
-    let struct_fields = struct_fields
-        .iter()
-        .map(|field| {
-            let field_ident = field.ident();
-            let field_pub_state = field.pub_state();
-            quote! { #field_pub_state #field_ident: String }
-        });
-
     let loadable_translations = handle_macro_result!(out
         macro_input
             .fields()

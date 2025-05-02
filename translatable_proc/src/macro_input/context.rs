@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use quote::ToTokens;
+use proc_macro2::TokenStream;
+use quote::{quote, ToTokens, TokenStreamExt};
 use syn::parse::{Parse, ParseStream};
 use syn::{
     Error as SynError,
@@ -154,6 +155,18 @@ impl ContextMacroField {
     #[allow(unused)]
     pub fn ty(&self) -> &Type {
         &self.ty
+    }
+}
+
+impl ToTokens for ContextMacroField {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let pub_state = self.pub_state();
+        let ident = self.ident();
+        let ty = self.ty();
+
+        tokens.append_all(quote! {
+            #pub_state #ident: #ty
+        });
     }
 }
 
