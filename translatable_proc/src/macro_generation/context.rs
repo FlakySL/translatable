@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{quote, ToTokens};
 use thiserror::Error;
 use translatable_shared::handle_macro_result;
 use translatable_shared::macros::collections::map_to_tokens;
@@ -14,6 +14,9 @@ enum MacroCompileError {
 
     #[error("One of the translations doesn't have the fallback language available")]
     FallbackNotAvailable,
+
+    #[error("Only '_', 'String' and '&str' is allowed for translation contexts")]
+    TypeNotAllowed
 }
 
 pub fn context_macro(
@@ -26,12 +29,27 @@ pub fn context_macro(
     let struct_pub = macro_input.pub_state();
     let struct_ident = macro_input.ident();
 
-    let struct_fields = macro_input
-        .fields()
+    let struct_fields = handle_macro_result!(out
+        macro_input
+            .fields()
+            .iter()
+            .map(|field| {
+                let field_ty = field.ty().to_token_stream().to_string();
+                if matches!(field_ty.as_str(), "String" | "&str" | "_") {
+                    Ok(field)
+                } else {
+                    Err(MacroCompileError::TypeNotAllowed)
+                }
+            })
+            .collect::<Result<Vec<_>, _>>()
+        );
+
+    let struct_fields = struct_fields
         .iter()
         .map(|field| {
             let field_ident = field.ident();
-            quote! { #field_ident: String }
+            let field_pub_state = field.pub_state();
+            quote! { #field_pub_state #field_ident: String }
         });
 
     let loadable_translations = handle_macro_result!(out
