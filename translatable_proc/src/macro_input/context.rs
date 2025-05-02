@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens, TokenStreamExt};
+use quote::{ToTokens, TokenStreamExt, quote};
 use syn::parse::{Parse, ParseStream};
 use syn::{
     Error as SynError,

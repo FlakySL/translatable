@@ -15,7 +15,7 @@ enum MacroCompileError {
     #[error("One of the translations doesn't have the fallback language available")]
     FallbackNotAvailable,
 
-    #[error("Only '_', 'String' and '&str' is allowed for translation contexts")]
+    #[error("Only String' and '&str' is allowed for translation contexts")]
     TypeNotAllowed,
 }
 
@@ -30,18 +30,18 @@ pub fn context_macro(
     let struct_ident = macro_input.ident();
 
     let struct_fields = handle_macro_result!(out
-    macro_input
-        .fields()
-        .iter()
-        .map(|field| {
-            let field_ty = field.ty().to_token_stream().to_string();
-            if matches!(field_ty.as_str(), "String" | "&str" | "_") {
-                Ok(field)
-            } else {
-                Err(MacroCompileError::TypeNotAllowed)
-            }
-        })
-        .collect::<Result<Vec<_>, _>>()
+        macro_input
+            .fields()
+            .iter()
+            .map(|field| {
+                let field_ty = field.ty().to_token_stream().to_string();
+                if matches!(field_ty.as_str(), "String" | "&str") {
+                    Ok(field)
+                } else {
+                    Err(MacroCompileError::TypeNotAllowed)
+                }
+            })
+            .collect::<Result<Vec<_>, _>>()
     );
 
     let loadable_translations = handle_macro_result!(out
