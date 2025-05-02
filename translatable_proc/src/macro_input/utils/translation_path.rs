@@ -120,10 +120,13 @@ impl TranslationPath {
     pub fn merge(&self, other: &Self) -> Vec<String> {
         // TODO: merge spans (not yet in #19)
         [
-            self.segments().to_vec(),
-            other.segments().to_vec()
+            self.segments()
+                .to_vec(),
+            other
+                .segments()
+                .to_vec(),
         ]
-            .concat()
+        .concat()
     }
 
     /// Internal segments getter.

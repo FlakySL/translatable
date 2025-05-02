@@ -13,13 +13,15 @@ enum MacroCompileError {
     TranslationNotFound(String),
 
     #[error("One of the translations doesn't have the fallback language available")]
-    FallbackNotAvailable
+    FallbackNotAvailable,
 }
 
-pub fn context_macro(macro_args: ContextMacroArgs, macro_input: ContextMacroStruct) -> TokenStream2 {
+pub fn context_macro(
+    macro_args: ContextMacroArgs,
+    macro_input: ContextMacroStruct,
+) -> TokenStream2 {
     let translations = handle_macro_result!(out load_translations());
-    let base_path = macro_args
-        .base_path();
+    let base_path = macro_args.base_path();
 
     let struct_pub = macro_input.pub_state();
     let struct_ident = macro_input.ident();
@@ -77,7 +79,9 @@ pub fn context_macro(macro_args: ContextMacroArgs, macro_input: ContextMacroStru
             .collect::<Result<Vec<TokenStream2>, MacroCompileError>>()
     );
 
-    let is_lang_some = macro_args.fallback_language().is_some();
+    let is_lang_some = macro_args
+        .fallback_language()
+        .is_some();
 
     let load_ret_ty = if is_lang_some {
         quote! { Self }

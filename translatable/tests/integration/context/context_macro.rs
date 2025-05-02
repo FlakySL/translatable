@@ -11,12 +11,8 @@ pub struct TestContext {
 
 #[test]
 fn test() {
-    let translations = TestContext::load_translations(
-        Language::AA,
-        &HashMap::from([
-            ("user", "John")
-        ])
-    );
+    let translations =
+        TestContext::load_translations(Language::AA, &HashMap::from([("user", "John")]));
 
     assert_eq!(translations.informal, "Hey John, todo bien?");
     assert_eq!(translations.formal, "Bueno conocerte.")

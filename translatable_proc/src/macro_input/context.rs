@@ -2,7 +2,21 @@ use std::str::FromStr;
 
 use quote::ToTokens;
 use syn::parse::{Parse, ParseStream};
-use syn::{parse2, Error as SynError, Expr, ExprLit, Field, Ident, ItemStruct, Lit, MetaNameValue, Result as SynResult, Token, Type, Visibility};
+use syn::{
+    Error as SynError,
+    Expr,
+    ExprLit,
+    Field,
+    Ident,
+    ItemStruct,
+    Lit,
+    MetaNameValue,
+    Result as SynResult,
+    Token,
+    Type,
+    Visibility,
+    parse2,
+};
 use thiserror::Error;
 use translatable_shared::macros::errors::IntoCompileError;
 use translatable_shared::misc::language::Language;
@@ -21,12 +35,12 @@ enum MacroArgsError {
     InvalidLanguageLiteral(String),
 
     #[error("Unknown key '{0}', allowed keys are 'fallback_language' and 'base_path'")]
-    UnknownKey(String)
+    UnknownKey(String),
 }
 
-pub struct ContextMacroArgs{
+pub struct ContextMacroArgs {
     base_path: Option<TranslationPath>,
-    fallback_language: Option<Language>
+    fallback_language: Option<Language>,
 }
 
 pub struct ContextMacroField {
@@ -66,47 +80,43 @@ impl Parse for ContextMacroArgs {
         let mut fallback_language = None;
 
         for kvp in values {
-            let key = kvp.path
+            let key = kvp
+                .path
                 .to_token_stream()
                 .to_string();
 
             match key.as_str() {
                 "base_path" => {
-                    base_path = Some(
-                        parse2::<TranslationPath>(kvp.value.to_token_stream())?
-                    );
-                }
+                    base_path = Some(parse2::<TranslationPath>(
+                        kvp.value
+                            .to_token_stream(),
+                    )?);
+                },
 
                 "fallback_language" => {
                     if let Expr::Lit(ExprLit { lit: Lit::Str(lit), .. }) = kvp.value {
                         fallback_language = Some(
-                            Language::from_str(lit.value().as_str())
-                                .map_err(|_|
-                                    MacroArgsError::InvalidLanguageLiteral(lit.value())
-                                        .to_syn_error(lit)
-                                )?
+                            Language::from_str(
+                                lit.value()
+                                    .as_str(),
+                            )
+                            .map_err(|_| {
+                                MacroArgsError::InvalidLanguageLiteral(lit.value())
+                                    .to_syn_error(lit)
+                            })?,
                         );
                     } else {
-                        return Err(
-                            MacroArgsError::OnlyLangLiteralAllowed
-                                .to_syn_error(kvp.value)
-                        );
+                        return Err(MacroArgsError::OnlyLangLiteralAllowed.to_syn_error(kvp.value));
                     }
-                }
+                },
 
                 key => {
-                    return Err(
-                        MacroArgsError::UnknownKey(key.to_string())
-                            .to_syn_error(kvp.path)
-                    );
-                }
+                    return Err(MacroArgsError::UnknownKey(key.to_string()).to_syn_error(kvp.path));
+                },
             }
         }
 
-        Ok(Self {
-            base_path,
-            fallback_language
-        })
+        Ok(Self { base_path, fallback_language })
     }
 }
 
@@ -116,16 +126,16 @@ impl ContextMacroField {
     pub fn path(&self) -> TranslationPath {
         self.path
             .clone()
-            .unwrap_or_else(||
+            .unwrap_or_else(|| {
                 TranslationPath::new(
                     vec![
                         self.ident
-                            .to_string()
+                            .to_string(),
                     ],
                     self.ident
-                        .span()
+                        .span(),
                 )
-            )
+            })
     }
 
     #[inline]
