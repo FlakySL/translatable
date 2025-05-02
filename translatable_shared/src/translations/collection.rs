@@ -47,10 +47,10 @@ impl TranslationNodeCollection {
     /// independently, if you are looking for an independent
     /// translation you may want to call find_path instead.
     ///
-    /// # Arguments
+    /// **Arguments**
     /// * `path` - The OS path where the file was originally found.
     ///
-    /// # Returns
+    /// **Returns**
     /// A top level translation node, containing all the translations
     /// in that specific file.
     #[allow(unused)]
@@ -66,11 +66,11 @@ impl TranslationNodeCollection {
     /// of the necessary TOML object path to reach a specific
     /// translation object.
     ///
-    /// # Arguments
+    /// **Arguments**
     /// * `path` - The sections of the TOML path in order to access
     /// the desired translation object.
     ///
-    /// # Returns
+    /// **Returns**
     /// A translation object containing a specific translation
     /// in all it's available languages.
     pub fn find_path<I: ToString>(&self, path: &Vec<I>) -> Option<&TranslationObject> {
