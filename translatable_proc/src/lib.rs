@@ -7,6 +7,8 @@
 //! The `translatable` library re-exports the macros
 //! declared in this crate.
 
+#![warn(missing_docs)]
+
 use macro_generation::context::context_macro;
 use macro_input::context::{ContextMacroArgs, ContextMacroStruct};
 use proc_macro::TokenStream;

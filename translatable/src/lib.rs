@@ -5,6 +5,8 @@
 //! ISO 639-1 compliance, and TOML-based
 //! translation management.
 
+#![warn(missing_docs)]
+
 mod error;
 
 /// Runtime error re-export.
