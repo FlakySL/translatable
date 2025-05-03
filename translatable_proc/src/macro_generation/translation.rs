@@ -1,10 +1,11 @@
 //! [`translation!()`] macro output module.
 //!
 //! This module contains the required for
-//! the generation of the `translation!()` macro tokens
-//! with intrinsics from `macro_input::translation.rs`.
+//! the generation of the [`translation!()`] macro tokens
+//! with intrinsics from [`macro_input::translation`].
 //!
 //! [`translation!()`]: crate::translation
+//! [`macro_input::translation`]: super::super::macro_input::translation
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
@@ -46,7 +47,7 @@ enum MacroCompileError {
     LanguageNotAvailable(Language, String),
 }
 
-/// `translation!()` macro output generation.
+/// [`translation!()`] macro output generation.
 ///
 /// Expands into code that resolves a translation string based on the input
 /// language and translation path, performing placeholder substitutions
@@ -61,11 +62,14 @@ enum MacroCompileError {
 ///
 /// **Arguments**
 /// * `input` — Structured arguments defining the translation path, language,
-/// and any placeholder replacements obtained from `macro_input::translation`.
+/// and any placeholder replacements obtained from [`macro_input::translation`].
 ///
 /// **Returns**
 /// Generated `TokenStream2` representing the resolved translation string or
 /// runtime lookup logic.
+///
+/// [`macro_input::translation`]: super::super::macro_input::translation
+/// [`translation!()`]: crate::translation
 pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
     let translations = handle_macro_result!(load_translations());
 
