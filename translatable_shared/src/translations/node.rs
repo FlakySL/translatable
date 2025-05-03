@@ -172,22 +172,7 @@ impl ToTokens for TranslationNode {
 impl TryFrom<Table> for TranslationNode {
     type Error = TranslationNodeError;
 
-    /// Attempts to convert a `Table` into a `TranslationNode`.
-    ///
-    /// This function iterates over the key-value pairs in the given `Table`.
-    /// Depending on the type of each value, it either adds a translation to
-    /// a `TranslationObject` or a nested `TranslationNode` to a `TranslationNesting`.
-    /// If the conversion fails due to mixed values or invalid nesting, it returns
-    /// a `TranslationNodeError`.
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - A TOML table to be converted.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` containing a `TranslationNode` if successful, or a
-    /// `TranslationNodeError` if the conversion fails.
+    // The top level can only contain objects is never enforced.
     fn try_from(value: Table) -> Result<Self, Self::Error> {
         let mut result = None;
 
@@ -231,20 +216,6 @@ impl TryFrom<Table> for TranslationNode {
 impl<T> TryFrom<ImDocument<T>> for TranslationNode {
     type Error = TranslationNodeError;
 
-    /// Attempts to convert a `ImDocument` into a `TranslationNode`.
-    ///
-    /// This function tries to parse the given `ImDocument` as a TOML table
-    /// and convert it into a `TranslationNode`. If the conversion fails,
-    /// it returns a `TranslationNodeError`.
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - A mutable TOML document to be converted.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` containing a `TranslationNode` if successful, or a
-    /// `TranslationNodeError` if the conversion fails.
     fn try_from(value: ImDocument<T>) -> Result<Self, Self::Error> {
         Self::try_from(
             value
