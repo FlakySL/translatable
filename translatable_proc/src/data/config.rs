@@ -11,8 +11,7 @@ use std::sync::OnceLock;
 
 use strum::EnumString;
 use thiserror::Error;
-use toml::Table;
-use toml::de::Error as TomlError;
+use toml_edit::{DocumentMut, TomlError};
 
 /// Configuration error enum.
 ///
@@ -213,7 +212,7 @@ pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
 
     let toml_content = read_to_string("./translatable.toml")
         .unwrap_or_default()
-        .parse::<Table>()?;
+        .parse::<DocumentMut>()?;
 
     macro_rules! config_value {
         ($env_var:expr, $key:expr, $default:expr) => {

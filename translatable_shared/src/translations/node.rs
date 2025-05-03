@@ -11,7 +11,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, TokenStreamExt, quote};
 use strum::ParseError;
 use thiserror::Error;
-use toml::{Table, Value};
+use toml_edit::{DocumentMut, Item, Table, Value};
 
 use crate::macros::collections::{map_to_tokens, map_transform_to_tokens};
 use crate::misc::language::Language;
@@ -172,36 +172,85 @@ impl ToTokens for TranslationNode {
 impl TryFrom<Table> for TranslationNode {
     type Error = TranslationNodeError;
 
-    // The top level can only contain objects is never enforced.
+    /// Attempts to convert a `Table` into a `TranslationNode`.
+    ///
+    /// This function iterates over the key-value pairs in the given `Table`.
+    /// Depending on the type of each value, it either adds a translation to
+    /// a `TranslationObject` or a nested `TranslationNode` to a `TranslationNesting`.
+    /// If the conversion fails due to mixed values or invalid nesting, it returns
+    /// a `TranslationNodeError`.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - A TOML table to be converted.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `TranslationNode` if successful, or a
+    /// `TranslationNodeError` if the conversion fails.
     fn try_from(value: Table) -> Result<Self, Self::Error> {
         let mut result = None;
 
-        for (key, value) in value {
+        for (key, value) in value.iter() {
             match value {
-                Value::String(translation_value) => {
+                Item::Value(Value::String(translation_value)) => {
                     match result.get_or_insert_with(|| Self::Translation(HashMap::new())) {
                         Self::Translation(translation) => {
-                            translation.insert(key.parse()?, translation_value.parse()?);
+                            translation.insert(
+                                key.parse()?,
+                                translation_value
+                                    .clone()
+                                    .into_value()
+                                    .parse()?,
+                            );
                         },
-
                         Self::Nesting(_) => return Err(TranslationNodeError::MixedValues),
                     }
                 },
 
-                Value::Table(nesting_value) => {
+                Item::Table(nesting_value) => {
                     match result.get_or_insert_with(|| Self::Nesting(HashMap::new())) {
                         Self::Nesting(nesting) => {
-                            nesting.insert(key, Self::try_from(nesting_value)?);
+                            nesting.insert(key.to_string(), Self::try_from(nesting_value.clone())?);
                         },
-
                         Self::Translation(_) => return Err(TranslationNodeError::MixedValues),
                     }
                 },
-
                 _ => return Err(TranslationNodeError::InvalidNesting),
             }
         }
 
         result.ok_or(TranslationNodeError::EmptyTable)
+    }
+}
+
+/// TOML table parsing.
+///
+/// This implementation parses a TOML DocumentMut struct
+/// into a [`TranslationNode`] for validation and
+/// seeking the translations according to the rules.
+impl TryFrom<DocumentMut> for TranslationNode {
+    type Error = TranslationNodeError;
+
+    /// Attempts to convert a `DocumentMut` into a `TranslationNode`.
+    ///
+    /// This function tries to parse the given `DocumentMut` as a TOML table
+    /// and convert it into a `TranslationNode`. If the conversion fails,
+    /// it returns a `TranslationNodeError`.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - A mutable TOML document to be converted.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `TranslationNode` if successful, or a
+    /// `TranslationNodeError` if the conversion fails.
+    fn try_from(value: DocumentMut) -> Result<Self, Self::Error> {
+        Self::try_from(
+            value
+                .as_table()
+                .clone(),
+        )
     }
 }
