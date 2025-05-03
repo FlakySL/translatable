@@ -210,7 +210,7 @@ impl TryFrom<Table> for TranslationNode {
                 Item::Table(nesting_value) => {
                     match result.get_or_insert_with(|| Self::Nesting(HashMap::new())) {
                         Self::Nesting(nesting) => {
-                            nesting.insert(key.to_string(), Self::try_from(nesting_value.clone())?);
+                            nesting.insert(key.to_string(), Self::try_from(nesting_value)?);
                         },
                         Self::Translation(_) => return Err(TranslationNodeError::MixedValues),
                     }
