@@ -13,7 +13,7 @@ use std::io::Error as IoError;
 use std::sync::OnceLock;
 
 use thiserror::Error;
-use toml_edit::{DocumentMut, TomlError};
+use toml_edit::{ImDocument, TomlError};
 use translatable_shared::translations::collection::TranslationNodeCollection;
 use translatable_shared::translations::node::{TranslationNode, TranslationNodeError};
 
@@ -208,7 +208,7 @@ pub fn load_translations() -> Result<&'static TranslationNodeCollection, Transla
         .iter()
         .map(|path| {
             let table = read_to_string(path)?
-                .parse::<DocumentMut>()
+                .parse::<ImDocument<_>>()
                 .map_err(|err| TranslationDataError::ParseToml(err, path.clone()))?;
 
             Ok((path.clone(), TranslationNode::try_from(table)?))

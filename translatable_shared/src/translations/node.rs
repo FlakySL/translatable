@@ -11,7 +11,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, TokenStreamExt, quote};
 use strum::ParseError;
 use thiserror::Error;
-use toml_edit::{DocumentMut, Item, Table, Value};
+use toml_edit::{ImDocument, Item, Table, Value};
 
 use crate::macros::collections::{map_to_tokens, map_transform_to_tokens};
 use crate::misc::language::Language;
@@ -191,7 +191,7 @@ impl TryFrom<Table> for TranslationNode {
     fn try_from(value: Table) -> Result<Self, Self::Error> {
         let mut result = None;
 
-        for (key, value) in value.iter() {
+        for (key, value) in value {
             match value {
                 Item::Value(Value::String(translation_value)) => {
                     match result.get_or_insert_with(|| Self::Translation(HashMap::new())) {
@@ -199,7 +199,6 @@ impl TryFrom<Table> for TranslationNode {
                             translation.insert(
                                 key.parse()?,
                                 translation_value
-                                    .clone()
                                     .into_value()
                                     .parse()?,
                             );
@@ -226,15 +225,15 @@ impl TryFrom<Table> for TranslationNode {
 
 /// TOML table parsing.
 ///
-/// This implementation parses a TOML DocumentMut struct
+/// This implementation parses a TOML ImDocument struct
 /// into a [`TranslationNode`] for validation and
 /// seeking the translations according to the rules.
-impl TryFrom<DocumentMut> for TranslationNode {
+impl<T> TryFrom<ImDocument<T>> for TranslationNode {
     type Error = TranslationNodeError;
 
-    /// Attempts to convert a `DocumentMut` into a `TranslationNode`.
+    /// Attempts to convert a `ImDocument` into a `TranslationNode`.
     ///
-    /// This function tries to parse the given `DocumentMut` as a TOML table
+    /// This function tries to parse the given `ImDocument` as a TOML table
     /// and convert it into a `TranslationNode`. If the conversion fails,
     /// it returns a `TranslationNodeError`.
     ///
@@ -246,7 +245,7 @@ impl TryFrom<DocumentMut> for TranslationNode {
     ///
     /// A `Result` containing a `TranslationNode` if successful, or a
     /// `TranslationNodeError` if the conversion fails.
-    fn try_from(value: DocumentMut) -> Result<Self, Self::Error> {
+    fn try_from(value: ImDocument<T>) -> Result<Self, Self::Error> {
         Self::try_from(
             value
                 .as_table()

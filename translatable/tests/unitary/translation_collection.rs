@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use toml_edit::DocumentMut;
+use toml_edit::ImDocument;
 use translatable::Language;
 use translatable_shared::translations::collection::TranslationNodeCollection;
 use translatable_shared::translations::node::TranslationNode;
@@ -24,7 +24,7 @@ pub fn loads_and_finds_collection() {
             "a".into(),
             TranslationNode::try_from(
                 FILE_1
-                    .parse::<DocumentMut>()
+                    .parse::<ImDocument<_>>()
                     .expect("TOML to be parsed correctly."),
             )
             .expect("TOML to follow the translation rules."),
@@ -33,7 +33,7 @@ pub fn loads_and_finds_collection() {
             "b".into(),
             TranslationNode::try_from(
                 FILE_2
-                    .parse::<DocumentMut>()
+                    .parse::<ImDocument<_>>()
                     .expect("TOML to be parsed correctly."),
             )
             .expect("TOML to follow the translation rules."),
