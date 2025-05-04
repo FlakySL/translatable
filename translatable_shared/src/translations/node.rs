@@ -6,12 +6,13 @@
 //! lead to translation objects or other paths.
 
 use std::collections::HashMap;
+use std::mem::take;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, TokenStreamExt, quote};
 use strum::ParseError;
 use thiserror::Error;
-use toml_edit::{ImDocument, Item, Table, Value};
+use toml_edit::{DocumentMut, Item, Table, Value};
 
 use crate::macros::collections::{map_to_tokens, map_transform_to_tokens};
 use crate::misc::language::Language;
@@ -184,7 +185,7 @@ impl TryFrom<Table> for TranslationNode {
                             translation.insert(
                                 key.parse()?,
                                 translation_value
-                                    .into_value()
+                                    .value()
                                     .parse()?,
                             );
                         },
@@ -210,17 +211,15 @@ impl TryFrom<Table> for TranslationNode {
 
 /// TOML table parsing.
 ///
-/// This implementation parses a TOML ImDocument struct
+/// This implementation parses a TOML DocumentMut struct
 /// into a [`TranslationNode`] for validation and
 /// seeking the translations according to the rules.
-impl<T> TryFrom<ImDocument<T>> for TranslationNode {
+impl TryFrom<DocumentMut> for TranslationNode {
     type Error = TranslationNodeError;
 
-    fn try_from(value: ImDocument<T>) -> Result<Self, Self::Error> {
-        Self::try_from(
-            value
-                .as_table()
-                .clone(),
-        )
+    fn try_from(value: DocumentMut) -> Result<Self, Self::Error> {
+        let mut doc = value;
+        let table = take(doc.as_table_mut());
+        Self::try_from(table)
     }
 }
