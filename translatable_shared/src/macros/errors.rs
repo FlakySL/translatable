@@ -39,6 +39,16 @@ where
         quote! { std::compile_error!(#message) }
     }
 
+    /// Convert error reference to runtime.
+    ///
+    /// Calls [`to_compile_error`] but wraps that
+    /// invocation in a function, so errors outside
+    /// functions only target that specific error.
+    ///
+    /// **Returns**
+    /// A `fn __() {}` wrapped [`to_compile_error`] invocation.
+    ///
+    /// [`to_compile_error`]: IntoCompileError::to_compile_error
     fn to_out_compile_error(&self) -> TokenStream2 {
         let invocation = self.to_compile_error();
         quote! { fn __() { #invocation } }
@@ -75,7 +85,11 @@ impl<T: Display> IntoCompileError for T {}
 /// This macro is meant to be called from a macro
 /// generation function.
 ///
+/// If you prepend `out` to the value this will
+/// call [`to_out_compile_error`] instead.
+///
 /// [`to_compile_error`]: IntoCompileError::to_compile_error
+/// [`to_out_compile_error`]: IntoCompileError::to_out_compile_error
 #[macro_export]
 macro_rules! handle_macro_result {
     ($method:ident; $val:expr) => {{

@@ -80,7 +80,7 @@ pub fn translation(input: TokenStream) -> TokenStream {
 ///
 /// You can configure some parameters as a punctuated [`MetaNameValue`],
 /// these are
-/// - `base_path`: A path that gets pre-appended to all fields.
+/// - `base_path`: A path that gets prepended to all fields.
 /// - `fallback_language`: A language that must be available for all
 /// paths and changes the return type of the `load_translations` method.
 ///

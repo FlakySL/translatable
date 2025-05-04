@@ -85,7 +85,7 @@ enum MacroArgsError {
 pub struct ContextMacroArgs {
     /// Field base path.
     ///
-    /// A base path to be pre-appended to all
+    /// A base path to be prepended to all
     /// field paths.
     base_path: TranslationPath,
 
