@@ -130,6 +130,10 @@ impl FormatString {
         original
     }
 
+    /// Original string getter.
+    ///
+    /// **Returns**
+    /// A shared slice to the original string.
     pub fn original(&self) -> &str {
         &self.original
     }

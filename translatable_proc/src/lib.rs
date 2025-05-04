@@ -21,7 +21,7 @@ mod data;
 mod macro_generation;
 mod macro_input;
 
-/// **translation obtention macro.**
+/// # Translation obtention macro.
 ///
 /// This macro generates the way to obtain a translation
 /// from the translation files in the directory defined
@@ -68,11 +68,40 @@ pub fn translation(input: TokenStream) -> TokenStream {
     translation_macro(parse_macro_input!(input as TranslationMacroArgs).into()).into()
 }
 
+/// # Translation context macro
+///
+/// This macro converts a struct into a translation context.
+///
+/// By definition that struct shouldn't be used for anything else,
+/// but nothing stops you from doing so.
+///
+/// This macro applies a rule to the struct. All fields must be
+/// a `String` or `&str`.
+///
+/// You can configure some parameters as a punctuated [`MetaNameValue`],
+/// these are
+/// - `base_path`: A path that gets pre-appended to all fields.
+/// - `fallback_language`: A language that must be available for all
+/// paths and changes the return type of the `load_translations` method.
+///
+/// All the fields on the struct now point to paths in your translation
+/// files, you can extend these paths applying the `#[path()]` attribute
+/// with a [`TranslationPath`]. Otherwise the path will be appended as
+/// the field identifier.
+///
+/// The field and struct visibility are kept as original.
+///
+/// This macro also generates a method called `load_translations` dynamically
+/// that loads all translations and returns an instance of the struct, optionally
+/// wrapped on a result depending on the `fallback_language` parameter value.
+///
+/// [`MetaNameValue`]: syn::MetaNameValue
+/// [`TranslationPath`]: macro_input::utils::translation_path::TranslationPath
 #[proc_macro_attribute]
 pub fn translation_context(attr: TokenStream, item: TokenStream) -> TokenStream {
     context_macro(
         parse_macro_input!(attr as ContextMacroArgs),
         parse_macro_input!(item as ContextMacroStruct),
     )
-    .into()
+        .into()
 }
