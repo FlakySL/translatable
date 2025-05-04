@@ -1,7 +1,7 @@
-//! [`translation!()`] output generation module.
+//! [`translation!()`]  input parsing module.
 //!
 //! This module declares a structure that implements
-//! [`Parse`] for it to be used with [`parse_macro_input`]
+//! [`Parse`] for it to be used with [`parse_macro_input`].
 //!
 //! [`translation!()`]: crate::translation
 //! [`parse_macro_input`]: syn::parse_macro_input
@@ -25,6 +25,8 @@ use super::utils::translation_path::TranslationPath;
 /// Represents errors that can occur while parsing the [`translation!()`]
 /// macro input. This error is only used while parsing compile-time input,
 /// as runtime input is validated in runtime.
+///
+/// [`translation!()`]: crate::translation
 #[derive(Error, Debug)]
 enum MacroArgsError {
     /// An error while parsing a compile-time String value

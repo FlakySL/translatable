@@ -67,7 +67,7 @@ pub fn context_macro(
     let translations = handle_macro_result!(out load_translations());
     let base_path = macro_args.base_path();
 
-    let struct_pub = macro_input.pub_state();
+    let struct_pub = macro_input.visibility();
     let struct_ident = macro_input.ident();
 
     let struct_fields = handle_macro_result!(out
