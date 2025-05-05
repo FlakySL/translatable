@@ -61,8 +61,7 @@ pub fn escapes_templates() {
 #[test]
 pub fn gives_original_string() {
     let result = FormatString::from_str("Hello {name} how are you doing {day}?")
-        .expect("Format string to be valid.")
-        .original();
+        .expect("Format string to be valid.");
 
-    assert_eq!(result, "Hello {name} how are you doing {day}?");
+    assert_eq!(result.original(), "Hello {name} how are you doing {day}?");
 }
