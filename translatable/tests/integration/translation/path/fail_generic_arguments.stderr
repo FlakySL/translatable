@@ -1,0 +1,5 @@
+error: A translation path can't contain generic arguments.
+ --> tests/integration/translation/path/fail_generic_arguments.rs:5:48
+  |
+5 |     translation!("es", static greetings::formal<String>);
+  |                                                ^^^^^^^^

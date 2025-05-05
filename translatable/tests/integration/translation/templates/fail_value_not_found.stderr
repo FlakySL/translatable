@@ -1,5 +1,5 @@
 error[E0425]: cannot find value `user` in this scope
- --> tests/integration/templates/fail_value_not_found.rs:7:52
+ --> tests/integration/translation/templates/fail_value_not_found.rs:7:52
   |
 7 |     translation!("es", static greetings::informal, user);
   |                                                    ^^^^ not found in this scope

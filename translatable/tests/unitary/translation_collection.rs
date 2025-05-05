@@ -49,7 +49,7 @@ pub fn loads_and_finds_collection() {
         .expect("Translation to be found.")
         .get(&Language::ES)
         .expect("Language to be available.")
-        .replace_with(HashMap::new());
+        .replace_with(&HashMap::new());
 
     assert_eq!(translation, "Hola");
 }

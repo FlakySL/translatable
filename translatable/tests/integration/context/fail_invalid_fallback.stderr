@@ -1,0 +1,5 @@
+error: Invalid language literal 'invalid' is not a valid ISO-639-1 language
+ --> tests/integration/context/fail_invalid_fallback.rs:3:66
+  |
+3 | #[translation_context(base_path = greetings, fallback_language = "invalid")]
+  |                                                                  ^^^^^^^^^

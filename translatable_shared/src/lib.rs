@@ -8,6 +8,8 @@
 //! declared in this crate and exposes the necessary
 //! ones.
 
+#![warn(missing_docs)]
+
 pub mod macros;
 pub mod misc;
 pub mod translations;

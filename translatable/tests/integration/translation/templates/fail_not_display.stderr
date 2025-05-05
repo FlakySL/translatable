@@ -1,5 +1,5 @@
 error[E0599]: `NotDisplay` doesn't implement `std::fmt::Display`
- --> tests/integration/templates/fail_not_display.rs:7:5
+ --> tests/integration/translation/templates/fail_not_display.rs:7:5
   |
 4 | struct NotDisplay;
   | ----------------- method `to_string` not found for this struct because it doesn't satisfy `NotDisplay: ToString` or `NotDisplay: std::fmt::Display`

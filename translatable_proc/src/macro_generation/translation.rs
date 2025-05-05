@@ -1,10 +1,11 @@
 //! [`translation!()`] macro output module.
 //!
 //! This module contains the required for
-//! the generation of the `translation!()` macro tokens
-//! with intrinsics from `macro_input::translation.rs`.
+//! the generation of the [`translation!()`] macro tokens
+//! with intrinsics from [`macro_input::translation`].
 //!
 //! [`translation!()`]: crate::translation
+//! [`macro_input::translation`]: super::super::macro_input::translation
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
@@ -14,8 +15,8 @@ use translatable_shared::macros::collections::{map_to_tokens, map_transform_to_t
 use translatable_shared::misc::language::Language;
 
 use crate::data::translations::load_translations;
-use crate::macro_input::input_type::InputType;
 use crate::macro_input::translation::TranslationMacroArgs;
+use crate::macro_input::utils::input_type::InputType;
 
 /// Macro compile-time translation resolution error.
 ///
@@ -46,7 +47,7 @@ enum MacroCompileError {
     LanguageNotAvailable(Language, String),
 }
 
-/// `translation!()` macro output generation.
+/// [`translation!()`] macro output generation.
 ///
 /// Expands into code that resolves a translation string based on the input
 /// language and translation path, performing placeholder substitutions
@@ -61,11 +62,14 @@ enum MacroCompileError {
 ///
 /// **Arguments**
 /// * `input` — Structured arguments defining the translation path, language,
-/// and any placeholder replacements obtained from `macro_input::translation`.
+/// and any placeholder replacements obtained from [`macro_input::translation`].
 ///
 /// **Returns**
 /// Generated `TokenStream2` representing the resolved translation string or
 /// runtime lookup logic.
+///
+/// [`macro_input::translation`]: super::super::macro_input::translation
+/// [`translation!()`]: crate::translation
 pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
     let translations = handle_macro_result!(load_translations());
 
@@ -76,10 +80,11 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
 
     if let InputType::Static(language) = input.language() {
         if let InputType::Static(path) = input.path() {
-            let static_path_display = path.join("::");
+            let path_segments = path.segments();
+            let static_path_display = path_segments.join("::");
 
             let translation_object = translations
-                .find_path(path)
+                .find_path(path_segments)
                 .ok_or_else(|| MacroCompileError::PathNotFound(static_path_display.clone()));
 
             let translation = handle_macro_result!(
@@ -95,7 +100,7 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
 
             return quote! {
                 #translation
-                    .replace_with(#template_replacements)
+                    .replace_with(&#template_replacements)
             };
         }
     }
@@ -111,17 +116,18 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
 
     let translation_object = match input.path() {
         InputType::Static(path) => {
-            let static_path_display = path.join("::");
+            let path_segments = path.segments();
+            let static_path_display = path_segments.join("::");
 
             let translation_object = translations
-                .find_path(path)
+                .find_path(path_segments)
                 .ok_or_else(|| MacroCompileError::PathNotFound(static_path_display.clone()));
 
             let translations_tokens = map_to_tokens(handle_macro_result!(translation_object));
 
             quote! {
                 #[doc(hidden)]
-                let path: Vec<_> = vec![#(#path.to_string()),*];
+                let path: Vec<_> = vec![#(#path_segments.to_string()),*];
 
                 #translations_tokens
             }
@@ -150,7 +156,7 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
                 #translation_object
                     .get(&language)
                     .ok_or_else(|| translatable::Error::LanguageNotAvailable(language, path.join("::")))?
-                    .replace_with(#template_replacements)
+                    .replace_with(&#template_replacements)
             })
         })()
     }

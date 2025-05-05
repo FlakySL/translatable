@@ -27,12 +27,31 @@ where
     /// for it to be returned when an error
     /// happens.
     ///
+    /// The invocation happens inside a method
+    /// for compatibility in both outside and
+    /// inside functions.
+    ///
     /// **Returns**
     /// A [`compile_error!`] wrapped `&str`.
     #[cold]
     fn to_compile_error(&self) -> TokenStream2 {
         let message = self.to_string();
         quote! { std::compile_error!(#message) }
+    }
+
+    /// Convert error reference to runtime.
+    ///
+    /// Calls [`to_compile_error`] but wraps that
+    /// invocation in a function, so errors outside
+    /// functions only target that specific error.
+    ///
+    /// **Returns**
+    /// A `fn __() {}` wrapped [`to_compile_error`] invocation.
+    ///
+    /// [`to_compile_error`]: IntoCompileError::to_compile_error
+    fn to_out_compile_error(&self) -> TokenStream2 {
+        let invocation = self.to_compile_error();
+        quote! { fn __() { #invocation } }
     }
 
     /// Convert error reference to a spanned [`SynError`].
@@ -66,15 +85,27 @@ impl<T: Display> IntoCompileError for T {}
 /// This macro is meant to be called from a macro
 /// generation function.
 ///
+/// If you prepend `out` to the value this will
+/// call [`to_out_compile_error`] instead.
+///
 /// [`to_compile_error`]: IntoCompileError::to_compile_error
+/// [`to_out_compile_error`]: IntoCompileError::to_out_compile_error
 #[macro_export]
 macro_rules! handle_macro_result {
-    ($val:expr) => {{
+    ($method:ident; $val:expr) => {{
         use $crate::macros::errors::IntoCompileError;
 
         match $val {
             std::result::Result::Ok(value) => value,
-            std::result::Result::Err(error) => return error.to_compile_error(),
+            std::result::Result::Err(error) => return error.$method(),
         }
     }};
+
+    ($val:expr) => {
+        $crate::handle_macro_result!(to_compile_error; $val)
+    };
+
+    (out $val:expr) => {
+        $crate::handle_macro_result!(to_out_compile_error; $val)
+    };
 }

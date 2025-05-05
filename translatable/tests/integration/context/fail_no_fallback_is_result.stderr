@@ -1,0 +1,10 @@
+error[E0609]: no field `formal` on type `Result<Context, translatable::Error>`
+  --> tests/integration/context/fail_no_fallback_is_result.rs:12:17
+   |
+12 |     assert!(ctx.formal); // invalid call
+   |                 ^^^^^^ unknown field
+   |
+help: one of the expressions' fields has a field of the same name
+   |
+12 |     assert!(ctx.unwrap().formal); // invalid call
+   |                 +++++++++
