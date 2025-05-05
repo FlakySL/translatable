@@ -25,7 +25,8 @@ pub fn loads_and_finds_collection() {
             TranslationNode::try_from(
                 FILE_1
                     .parse::<DocumentMut>()
-                    .expect("TOML to be parsed correctly."),
+                    .expect("TOML to be parsed correctly.")
+                    .as_table(),
             )
             .expect("TOML to follow the translation rules."),
         ),
@@ -34,7 +35,8 @@ pub fn loads_and_finds_collection() {
             TranslationNode::try_from(
                 FILE_2
                     .parse::<DocumentMut>()
-                    .expect("TOML to be parsed correctly."),
+                    .expect("TOML to be parsed correctly.")
+                    .as_table(),
             )
             .expect("TOML to follow the translation rules."),
         ),

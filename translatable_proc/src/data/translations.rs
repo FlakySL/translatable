@@ -211,7 +211,7 @@ pub fn load_translations() -> Result<&'static TranslationNodeCollection, Transla
                 .parse::<DocumentMut>()
                 .map_err(|err| TranslationDataError::ParseToml(err, path.clone()))?;
 
-            Ok((path.clone(), TranslationNode::try_from(table)?))
+            Ok((path.clone(), TranslationNode::try_from(table.as_table())?))
         })
         .collect::<Result<TranslationNodeCollection, TranslationDataError>>()?;
 

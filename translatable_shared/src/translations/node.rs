@@ -6,13 +6,12 @@
 //! lead to translation objects or other paths.
 
 use std::collections::HashMap;
-use std::mem::take;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, TokenStreamExt, quote};
 use strum::ParseError;
 use thiserror::Error;
-use toml_edit::{DocumentMut, Item, Table, Value};
+use toml_edit::{Item, Table, Value};
 
 use crate::macros::collections::{map_to_tokens, map_transform_to_tokens};
 use crate::misc::language::Language;
@@ -168,13 +167,14 @@ impl ToTokens for TranslationNode {
 /// TOML table parsing.
 ///
 /// This implementation parses a TOML table object
+/// reference usually taken from a `toml_edit::DocuemntMut`
 /// into a [`TranslationNode`] for validation and
 /// seeking the translations according to the rules.
-impl TryFrom<Table> for TranslationNode {
+impl TryFrom<&Table> for TranslationNode {
     type Error = TranslationNodeError;
 
     // The top level can only contain objects is never enforced.
-    fn try_from(value: Table) -> Result<Self, Self::Error> {
+    fn try_from(value: &Table) -> Result<Self, Self::Error> {
         let mut result = None;
 
         for (key, value) in value {
@@ -206,20 +206,5 @@ impl TryFrom<Table> for TranslationNode {
         }
 
         result.ok_or(TranslationNodeError::EmptyTable)
-    }
-}
-
-/// TOML table parsing.
-///
-/// This implementation parses a TOML DocumentMut struct
-/// into a [`TranslationNode`] for validation and
-/// seeking the translations according to the rules.
-impl TryFrom<DocumentMut> for TranslationNode {
-    type Error = TranslationNodeError;
-
-    fn try_from(value: DocumentMut) -> Result<Self, Self::Error> {
-        let mut doc = value;
-        let table = take(doc.as_table_mut());
-        Self::try_from(table)
     }
 }
