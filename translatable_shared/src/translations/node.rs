@@ -11,7 +11,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, TokenStreamExt, quote};
 use strum::ParseError;
 use thiserror::Error;
-use toml::{Table, Value};
+use toml_edit::{Item, Table, Value};
 
 use crate::macros::collections::{map_to_tokens, map_transform_to_tokens};
 use crate::misc::language::Language;
@@ -167,37 +167,40 @@ impl ToTokens for TranslationNode {
 /// TOML table parsing.
 ///
 /// This implementation parses a TOML table object
+/// reference usually taken from a `toml_edit::DocuemntMut`
 /// into a [`TranslationNode`] for validation and
 /// seeking the translations according to the rules.
-impl TryFrom<Table> for TranslationNode {
+impl TryFrom<&Table> for TranslationNode {
     type Error = TranslationNodeError;
 
     // The top level can only contain objects is never enforced.
-    fn try_from(value: Table) -> Result<Self, Self::Error> {
+    fn try_from(value: &Table) -> Result<Self, Self::Error> {
         let mut result = None;
 
         for (key, value) in value {
             match value {
-                Value::String(translation_value) => {
+                Item::Value(Value::String(translation_value)) => {
                     match result.get_or_insert_with(|| Self::Translation(HashMap::new())) {
                         Self::Translation(translation) => {
-                            translation.insert(key.parse()?, translation_value.parse()?);
+                            translation.insert(
+                                key.parse()?,
+                                translation_value
+                                    .value()
+                                    .parse()?,
+                            );
                         },
-
                         Self::Nesting(_) => return Err(TranslationNodeError::MixedValues),
                     }
                 },
 
-                Value::Table(nesting_value) => {
+                Item::Table(nesting_value) => {
                     match result.get_or_insert_with(|| Self::Nesting(HashMap::new())) {
                         Self::Nesting(nesting) => {
-                            nesting.insert(key, Self::try_from(nesting_value)?);
+                            nesting.insert(key.to_string(), Self::try_from(nesting_value)?);
                         },
-
                         Self::Translation(_) => return Err(TranslationNodeError::MixedValues),
                     }
                 },
-
                 _ => return Err(TranslationNodeError::InvalidNesting),
             }
         }
