@@ -17,12 +17,14 @@ use crate::macro_input::context::{ContextMacroArgs, ContextMacroStruct};
 
 /// Macro compile-time translation resolution error.
 ///
-/// Represents errors that can occur while compiling the [`#\[translation_context\]`]
-/// macro. This includes cases where a translation path cannot be found or
-/// fallback is not available for all the translations in the context.
+/// Represents errors that can occur while compiling the
+/// [`#\[translation_context\]`] macro. This includes cases where a translation
+/// path cannot be found or fallback is not available for all the translations
+/// in the context.
 ///
 /// These errors are reported at compile-time by `rust-analyzer`
-/// for immediate feedback while invoking the [`#\[translation_context\]`] macro.
+/// for immediate feedback while invoking the [`#\[translation_context\]`]
+/// macro.
 ///
 /// [`#\[translation_context\]`]: crate::translation_context
 #[derive(Error, Debug)]

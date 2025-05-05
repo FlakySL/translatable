@@ -4,13 +4,11 @@ use translatable::translation_context;
 #[translation_context(base_path = greetings)]
 struct Context {
     formal: String,
-    informal: String
+    informal: String,
 }
 
 #[test]
-fn pass_without_params() {
-
-}
+fn pass_without_params() {}
 
 #[allow(unused)]
 fn main() {} // trybuild

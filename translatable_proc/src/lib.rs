@@ -91,8 +91,9 @@ pub fn translation(input: TokenStream) -> TokenStream {
 /// The field and struct visibility are kept as original.
 ///
 /// This macro also generates a method called `load_translations` dynamically
-/// that loads all translations and returns an instance of the struct, optionally
-/// wrapped on a result depending on the `fallback_language` parameter value.
+/// that loads all translations and returns an instance of the struct,
+/// optionally wrapped on a result depending on the `fallback_language`
+/// parameter value.
 ///
 /// [`MetaNameValue`]: syn::MetaNameValue
 /// [`TranslationPath`]: macro_input::utils::translation_path::TranslationPath
@@ -102,5 +103,5 @@ pub fn translation_context(attr: TokenStream, item: TokenStream) -> TokenStream 
         parse_macro_input!(attr as ContextMacroArgs),
         parse_macro_input!(item as ContextMacroStruct),
     )
-        .into()
+    .into()
 }

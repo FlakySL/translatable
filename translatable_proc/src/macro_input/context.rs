@@ -34,9 +34,9 @@ use super::utils::translation_path::TranslationPath;
 
 /// Parse error for [`ContextMacroArgs`] and [`ContextMacroStruct`].
 ///
-/// Represents errors that can occur while parsing the [`#\[translation_context\]`]
-/// macro input. This error is only used while parsing compile-time input,
-/// as runtime input is validated in runtime.
+/// Represents errors that can occur while parsing the
+/// [`#\[translation_context\]`] macro input. This error is only used while
+/// parsing compile-time input, as runtime input is validated in runtime.
 ///
 /// [`#\[translation_context\]`]: crate::translation_context
 #[derive(Error, Debug)]
@@ -222,8 +222,7 @@ impl Parse for ContextMacroArgs {
             }
         }
 
-        let base_path = base_path
-            .unwrap_or_else(|| TranslationPath::default());
+        let base_path = base_path.unwrap_or_else(|| TranslationPath::default());
 
         Ok(Self { base_path, fallback_language })
     }
