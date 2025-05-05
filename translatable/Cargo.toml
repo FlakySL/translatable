@@ -22,5 +22,5 @@ translatable_shared = { version = "1", path = "../translatable_shared/" }
 
 [dev-dependencies]
 quote = "1.0.40"
-toml = "0.8.21"
+toml = "0.8.22"
 trybuild = "1.0.104"
