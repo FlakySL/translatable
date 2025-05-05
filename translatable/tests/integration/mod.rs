@@ -1,4 +1,2 @@
+pub mod translation;
 pub mod context;
-pub mod language;
-pub mod path;
-pub mod templates;

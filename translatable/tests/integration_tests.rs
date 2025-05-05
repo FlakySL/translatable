@@ -45,14 +45,14 @@ fn valid_environment() {
         set_default_env();
         set_locales_env("everything_valid");
 
-        t.pass("./tests/integration/language/pass*.rs");
-        t.compile_fail("./tests/integration/language/fail*.rs");
+        t.pass("./tests/integration/translation/language/pass*.rs");
+        t.compile_fail("./tests/integration/translation/language/fail*.rs");
 
-        t.pass("./tests/integration/path/pass*.rs");
-        t.compile_fail("./tests/integration/path/fail*.rs");
+        t.pass("./tests/integration/translation/path/pass*.rs");
+        t.compile_fail("./tests/tranlsation/integration/path/fail*.rs");
 
-        t.pass("./tests/integration/templates/pass*.rs");
-        t.compile_fail("./tests/integration/templates/fail*.rs");
+        t.pass("./tests/integration/translation/templates/pass*.rs");
+        t.compile_fail("./tests/integration/translation/templates/fail*.rs");
     }
 }
 
