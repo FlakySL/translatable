@@ -57,3 +57,12 @@ pub fn escapes_templates() {
 
     assert_eq!(result, "You write escaped templates like {{ this }}.")
 }
+
+#[test]
+pub fn gives_original_string() {
+    let result = FormatString::from_str("Hello {name} how are you doing {day}?")
+        .expect("Format string to be valid.")
+        .original();
+
+    assert_eq!(result, "Hello {name} how are you doing {day}?");
+}
