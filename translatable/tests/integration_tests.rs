@@ -49,7 +49,7 @@ fn valid_environment() {
         t.compile_fail("./tests/integration/translation/language/fail*.rs");
 
         t.pass("./tests/integration/translation/path/pass*.rs");
-        t.compile_fail("./tests/tranlsation/integration/path/fail*.rs");
+        t.compile_fail("./tests/integration/translation/path/fail*.rs");
 
         t.pass("./tests/integration/translation/templates/pass*.rs");
         t.compile_fail("./tests/integration/translation/templates/fail*.rs");
