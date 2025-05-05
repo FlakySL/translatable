@@ -10,12 +10,11 @@
 #![warn(missing_docs)]
 
 use macro_generation::context::context_macro;
+use macro_generation::translation::translation_macro;
 use macro_input::context::{ContextMacroArgs, ContextMacroStruct};
+use macro_input::translation::TranslationMacroArgs;
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
-
-use crate::macro_generation::translation::translation_macro;
-use crate::macro_input::translation::TranslationMacroArgs;
 
 mod data;
 mod macro_generation;
