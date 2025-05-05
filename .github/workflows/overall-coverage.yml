@@ -31,6 +31,7 @@ jobs:
       - name: Generate coverage and get percentage
         id: coverage
         run: |
+          set -o pipefail
           make cov export-lcov=1 | tee output.log
           coverage=$(grep 'Total Coverage: ' output.log | awk '{print $3}')
           echo "coverage_percentage=${coverage%\%}" >> $GITHUB_OUTPUT
