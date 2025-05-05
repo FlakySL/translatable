@@ -53,6 +53,9 @@ fn valid_environment() {
 
         t.pass("./tests/integration/translation/templates/pass*.rs");
         t.compile_fail("./tests/integration/translation/templates/fail*.rs");
+
+        t.pass("./tests/integration/context/pass*.rs");
+        t.compile_fail("./tests/integration/context/fail*.rs");
     }
 }
 

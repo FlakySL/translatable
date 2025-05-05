@@ -1,0 +1,7 @@
+error: Only String' and '&str' is allowed for translation contexts
+ --> tests/integration/context/fail_disallowed_type.rs:4:1
+  |
+4 | #[translation_context(base_path = greetings)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `translation_context` (in Nightly builds, run with -Z macro-backtrace for more info)

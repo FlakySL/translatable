@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use translatable::{translation_context, Language};
 
 #[translation_context(base_path = greetings, fallback_language = "en")]

@@ -1,0 +1,8 @@
+error[E0599]: no method named `is_ok` found for struct `Context` in the current scope
+  --> tests/integration/context/fail_fallback_is_raw.rs:12:17
+   |
+4  | #[translation_context(base_path = greetings, fallback_language = "en")]
+   | ----------------------------------------------------------------------- method `is_ok` not found for this struct
+...
+12 |     assert!(ctx.is_ok()); // invalid call
+   |                 ^^^^^ method not found in `Context`
