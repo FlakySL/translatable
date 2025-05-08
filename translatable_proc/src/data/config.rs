@@ -11,7 +11,8 @@ use std::sync::OnceLock;
 
 use strum::EnumString;
 use thiserror::Error;
-use toml_edit::{DocumentMut, TomlError};
+use toml_edit::{DocumentMut, Table, TomlError};
+use translatable_shared::misc::language::Language;
 
 /// Configuration error enum.
 ///
@@ -147,6 +148,13 @@ pub struct MacroConfig {
     /// Determines the behavior when multiple files contain the same
     /// translation key.
     overlap: TranslationOverlap,
+
+    /// Translation default language.
+    ///
+    /// This will be used as default language if the overriden language
+    /// is not available, will automatically unwrap outputs as they will
+    /// be pre-handled by this.
+    fallback_language: Option<Language>
 }
 
 impl MacroConfig {
@@ -175,6 +183,14 @@ impl MacroConfig {
     /// when multiple files define the same key.
     pub fn overlap(&self) -> TranslationOverlap {
         self.overlap
+    }
+
+    /// Get the fallback language.
+    ///
+    /// **Returns**
+    /// Optionally the parsed format language from the configuration.
+    pub fn fallback_language(&self) -> Option<Language> {
+        self.fallback_language
     }
 }
 
@@ -214,51 +230,39 @@ pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
         .unwrap_or_default()
         .parse::<DocumentMut>()?;
 
-    macro_rules! config_value {
-        ($env_var:expr, $key:expr, $default:expr) => {
-            var($env_var)
-                .ok()
-                .or_else(|| {
-                    toml_content
-                        .get($key)
-                        .and_then(|v| v.as_str())
-                        .map(|v| v.to_string())
-                })
-                .unwrap_or_else(|| $default.into())
-        };
+    fn config_value(toml: &Table, key: &str) -> Option<String> {
+        var(format!("TRANSLATABLE_{}", key.to_uppercase()))
+            .ok()
+            .or_else(|| {
+                toml
+                    .get(key)
+                    .and_then(|v| v.as_str())
+                    .map(|v| v.to_string())
+            })
+    }
 
-        (parse($env_var:expr, $key:expr, $default:expr)) => {{
-            let value = var($env_var)
-                .ok()
-                .or_else(|| {
-                    toml_content
-                        .get($key)
-                        .and_then(|v| v.as_str())
-                        .map(|v| v.to_string())
-                });
-
-            if let Some(value) = value {
-                value
+    macro_rules! parsed_config_value {
+        ($key:literal) => {
+            config_value(&toml_content, $key)
+                .map(|s| s
                     .parse()
-                    .map_err(|_| ConfigError::InvalidValue($key.into(), value.into()))
-            } else {
-                Ok($default)
-            }
-        }};
+                    .map_err(|_| ConfigError::InvalidValue($key.into(), s))
+                )
+                .transpose()
+        };
     }
 
     let config = MacroConfig {
-        path: config_value!("TRANSLATABLE_LOCALES_PATH", "path", "./translations"),
-        overlap: config_value!(parse(
-            "TRANSLATABLE_OVERLAP",
-            "overlap",
-            TranslationOverlap::Ignore
-        ))?,
-        seek_mode: config_value!(parse(
-            "TRANSLATABLE_SEEK_MODE",
-            "seek_mode",
-            SeekMode::Alphabetical
-        ))?,
+        path: config_value(&toml_content, "locales_path")
+            .unwrap_or("./translations".into()),
+
+        overlap: parsed_config_value!("overlap")?
+            .unwrap_or(TranslationOverlap::Ignore),
+
+        seek_mode: parsed_config_value!("seek_mode")?
+            .unwrap_or(SeekMode::Alphabetical),
+
+        fallback_language: parsed_config_value!("fallback_language")?
     };
 
     Ok(TRANSLATABLE_CONFIG.get_or_init(|| config))

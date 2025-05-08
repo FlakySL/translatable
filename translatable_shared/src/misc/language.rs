@@ -28,7 +28,7 @@ impl ToTokens for Language {
 /// - Case-insensitive parsing
 /// - Strict validation
 /// - Complete ISO 639-1 coverage
-#[derive(Debug, Clone, EnumIter, Display, EnumString, Eq, Hash, PartialEq)]
+#[derive(Debug, Copy, Clone, EnumIter, Display, EnumString, Eq, Hash, PartialEq)]
 #[strum(ascii_case_insensitive)]
 pub enum Language {
     #[allow(missing_docs)]
