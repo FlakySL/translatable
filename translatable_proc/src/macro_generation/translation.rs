@@ -198,7 +198,7 @@ fn all_static(ctx: &GenerationContext, language: Language, path: &TranslationPat
 
     inline_quote! {{
         #translation
-            .replace_with(&#{ctx.template_replacements})
+            .replace_with(&#{get_template_replacements_stream(ctx.template_replacements)})
     }}
 }
 
@@ -224,7 +224,7 @@ fn path_static(
                 #{path.static_display}.into()
             ))
             .map(|format_string| format_string
-                .replace_with(&#{ctx.template_replacements})
+                .replace_with(&#{get_template_replacements_stream(ctx.template_replacements)})
             )
     }
 }
@@ -271,7 +271,7 @@ fn all_dynamic(
                 )
                 .ok_or_else(|| translatable::Error::LanguageNotAvailable(__lang, __path.join("::")))
                 .map(|format_string| format_string
-                    .replace_with(&#{ctx.template_replacements})
+                    .replace_with(&#{get_template_replacements_stream(ctx.template_replacements)})
                 )
         })()
     }
