@@ -17,15 +17,19 @@
 //! [`translation!()`]: crate::translation
 //! [`macro_input::translation`]: super::super::macro_input::translation
 
+use std::collections::HashMap;
+
+use syn::Ident;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{ToTokens, quote};
 use thiserror::Error;
-use translatable_shared::{handle_macro_result, inline_quote};
 use translatable_shared::macros::collections::{map_to_tokens, map_transform_to_tokens};
+use translatable_shared::macros::option::LiteralOption;
 use translatable_shared::misc::language::Language;
 use translatable_shared::misc::templating::FormatString;
 use translatable_shared::translations::collection::TranslationNodeCollection;
 use translatable_shared::translations::node::TranslationObject;
+use translatable_shared::{handle_macro_result, inline_quote};
 
 use crate::data::config::load_config;
 use crate::data::translations::load_translations;
@@ -77,20 +81,34 @@ enum MacroCompileError {
 /// in multiple functions.
 ///
 /// [`translation!()`]: crate::translation
-struct GenerationContext {
+struct GenerationContext<'i> {
     /// The translation fallback language
     /// whether it's available or not.
     fallback_language: Option<Language>,
 
     /// A reference to the translation nodes
     /// loaded from the file system.
-    translations: &'static TranslationNodeCollection,
+    translations: &'i TranslationNodeCollection,
 
-    /// A [`TokenStream2`] pointing to the
-    /// same address as the pre-processed
-    /// template replacements that must
-    /// be dynamically applied.
-    template_replacements: TokenStream2,
+    /// The user provided template replacements.
+    template_replacements: &'i HashMap<Ident, TokenStream2>,
+}
+
+/// Template replacement values to tokens.
+///
+/// Calls [`map_transform_to_tokens`] for the replacement values
+/// in a specific maneer.
+///
+/// **Arguments**
+/// * `replacements` - The replacement values.
+///
+/// **Returns**
+/// The token stream with the converted [`HashMap`].
+fn get_template_replacments_stream(replacements: &HashMap<Ident, TokenStream2>) -> TokenStream2 {
+    map_transform_to_tokens(
+        replacements,
+        |key, value| quote! { (stringify!(#key).to_string(), #value.to_string()) }
+    )
 }
 
 /// [`TranslationObject`] static obtention helper.
@@ -125,7 +143,8 @@ fn get_translation_object<'r>(
 ///
 /// **Arguments**
 /// * `original_path` - The original path where the translation was found.
-/// * `translation` - The translation object for where to find the fallback translation.
+/// * `translation` - The translation object for where to find the fallback
+///   translation.
 /// * `fallback_language` - The fallback language to find the translation.
 ///
 /// **Returns**
@@ -135,12 +154,16 @@ fn get_translation_object<'r>(
 fn get_fallback_translation<'r>(
     original_path: &TranslationPath,
     translation: &'r TranslationObject,
-    fallback_language: Option<Language>
+    fallback_language: Option<Language>,
 ) -> Result<Option<&'r FormatString>, MacroCompileError> {
     fallback_language
-        .map(|lang| translation
-            .get(&lang)
-            .ok_or_else(|| MacroCompileError::FallbackNotAvailable(original_path.static_display())))
+        .map(|lang| {
+            translation
+                .get(&lang)
+                .ok_or_else(|| {
+                    MacroCompileError::FallbackNotAvailable(original_path.static_display())
+                })
+        })
         .transpose()
 }
 
@@ -159,7 +182,9 @@ fn get_fallback_translation<'r>(
 #[inline(always)]
 fn all_static(ctx: &GenerationContext, language: Language, path: &TranslationPath) -> TokenStream2 {
     let translation_object = handle_macro_result!(get_translation_object(ctx.translations, path));
-    let fallback_translation = handle_macro_result!(get_fallback_translation(path, translation_object, ctx.fallback_language));
+    let fallback_translation = handle_macro_result!(
+        get_fallback_translation(path, translation_object, ctx.fallback_language)
+    );
 
     let translation = handle_macro_result!(
         translation_object
@@ -181,20 +206,75 @@ fn all_static(ctx: &GenerationContext, language: Language, path: &TranslationPat
 #[inline(always)]
 fn path_static(
     ctx: &GenerationContext,
-    lang: TokenStream2,
+    language: &TokenStream2,
     path: &TranslationPath,
 ) -> TokenStream2 {
     let translation_object = handle_macro_result!(get_translation_object(ctx.translations, path));
-    let fallback_translation = handle_macro_result!(get_fallback_translation(path, translation_object, ctx.fallback_language));
+    let fallback_translation: LiteralOption<_> = handle_macro_result!(
+        get_fallback_translation(path, translation_object, ctx.fallback_language)
+    )
+        .into();
 
     inline_quote! {
         #{map_to_tokens(translation_object)}
+            .get(&#language)
+            .or_else(|| #fallback_translation)
+            .ok_or_else(|| translatable::Error::LanguageNotAvailable(
+                #language,
+                #{path.static_display}.into()
+            ))
+            .map(|format_string| format_string
+                .replace_with(&#{ctx.template_replacements})
+            )
     }
 }
 
 #[inline(always)]
-fn all_dynamic(ctx: &GenerationContext, lang: TokenStream2, path: TokenStream2) -> TokenStream2 {
-    quote!{}
+fn all_dynamic(
+    ctx: &GenerationContext,
+    language: &TokenStream2,
+    path: &TokenStream2,
+) -> TokenStream2 {
+    inline_quote! {
+        (|| -> Result<std::string::String, translatable::Error> {
+            // validation
+            #[doc(hidden)]
+            let __lang: translatable::Language = #language;
+            #[doc(hidden)]
+            let __path: Vec<String> = #path
+                .iter()
+                .map(|x| x.to_string())
+                .collect();
+
+            // sources
+            #[doc(hidden)]
+            let __translations = #{ctx.translations};
+            #[doc(hidden)]
+            let __found_path = __translations
+                .find_path(&__path)
+                .ok_or_else(|| translatable::Error::PathNotFound(__path.join("::")))?;
+
+            // alternative
+            #[doc(hidden)]
+            let __fallback_translation = #{ctx.fallback_language}
+                .map(|fallback| __found_path
+                    .get(&fallback)
+                    .ok_or_else(|| translatable::Error::FallbackNotAvailable(fallback, __path.join("::")))
+                )
+                .transpose()?;
+
+            __translations
+                .find_path(&__path)
+                .and_then(|obj| obj
+                    .get(&__lang)
+                    .or(__fallback_translation)
+                )
+                .ok_or_else(|| translatable::Error::LanguageNotAvailable(__lang, __path.join("::")))
+                .map(|format_string| format_string
+                    .replace_with(&#{ctx.template_replacements})
+                )
+        })()
+    }
 }
 
 /// [`translation!()`] macro output generation.
@@ -221,25 +301,18 @@ fn all_dynamic(ctx: &GenerationContext, lang: TokenStream2, path: TokenStream2) 
 /// [`macro_input::translation`]: super::super::macro_input::translation
 /// [`translation!()`]: crate::translation
 pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
-    // TODO: separate concerns
-
     let config = handle_macro_result!(load_config());
     let translations = handle_macro_result!(load_translations());
 
     let ctx = GenerationContext {
         fallback_language: config.fallback_language(),
         translations,
-        template_replacements: map_transform_to_tokens(
-            input.replacements(),
-            |key, value| quote! { (stringify!(#key).to_string(), #value.to_string()) },
-        ),
+        template_replacements: input.replacements(),
     };
-
-    todo!();
 
     if let InputType::Static(language) = input.language() {
         if let InputType::Static(path) = input.path() {
-            return all_static(&ctx, language.clone(), path);
+            return all_static(&ctx, *language, path);
         }
     }
 
@@ -251,77 +324,9 @@ pub fn translation_macro(input: TranslationMacroArgs) -> TokenStream2 {
         },
     };
 
-    let translation_object = match input.path() {
-        InputType::Static(path) => {
-            let path_segments = path.segments();
-            let static_path_display = path_segments.join("::");
+    match input.path() {
+        InputType::Static(path) => path_static(&ctx, &language, &path),
 
-            let translation_object = handle_macro_result!(
-                translations
-                    .find_path(path_segments)
-                    .ok_or_else(|| MacroCompileError::PathNotFound(static_path_display.clone()))
-            );
-
-            let translations_tokens = map_to_tokens(translation_object);
-
-            if let Some(language_fallback) = config.fallback_language() {
-                let translation_fallback = handle_macro_result!(
-                    translation_object
-                        .get(&language_fallback)
-                        .ok_or_else(|| MacroCompileError::FallbackNotAvailable(
-                            static_path_display
-                        ))
-                );
-
-                return quote! {{
-                    #translations_tokens
-                        .get(&#language)
-                        .unwrap_or_else(|| #translation_fallback)
-//                        .replace_with(&#template_replacements)
-                }};
-            }
-
-            quote! {
-                #[doc(hidden)]
-                let path: Vec<_> = vec![#(#path_segments.to_string()),*];
-
-                #translations_tokens
-            }
-        },
-
-        InputType::Dynamic(path) => {
-            let translations_tokens = translations.to_token_stream();
-
-            quote! {
-                #[doc(hidden)]
-                let path: Vec<_> = #path;
-
-                #translations_tokens
-                    .find_path(&path)
-                    .ok_or_else(|| translatable::Error::PathNotFound(path.join("::")))?
-            }
-        },
-    };
-
-    let fallback_language = config
-        .fallback_language()
-        .map(|lang| quote! { .or_else(|| translation_object.get(&#lang)) })
-        .unwrap_or_else(|| TokenStream2::new());
-
-    quote! {
-        (|| -> Result<String, translatable::Error> {
-            std::result::Result::Ok({
-                #[doc(hidden)]
-                let language = #language;
-
-                #[doc(hidden)]
-                let translation_object = #translation_object;
-                translation_object
-                    .get(&language)
-                    #fallback_language
-                    .ok_or_else(|| translatable::Error::LanguageNotAvailable(language, path.join("::")))?
- //                   .replace_with(&#template_replacements)
-            })
-        })()
+        InputType::Dynamic(path) => all_dynamic(&ctx, &language, &path),
     }
 }

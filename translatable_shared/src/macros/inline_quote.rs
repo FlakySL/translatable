@@ -26,7 +26,7 @@ macro_rules! inline_quote {
     }};
 }
 
-/// inline_quote! dispatch macro.
+// inline_quote! dispatch macro.
 #[doc(hidden)]
 #[macro_export]
 #[clippy::format_args]
@@ -34,6 +34,7 @@ macro_rules! __inline_quote {
     // template dispatch branch, if #{} found evaluate
     // and extend.
     ( $tokens:ident => #{ $e:expr } $($rest:tt)* ) => {{
+        stringify!($e);
         let __inline_tmp = $e;
         $tokens.extend(quote::quote! { #__inline_tmp });
         $crate::__inline_quote!($tokens => $($rest)*);
