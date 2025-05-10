@@ -8,7 +8,6 @@ pub fn pass_dynamic_expr() {
         "es",
         "greetings.formal"
             .split(".")
-            .collect()
     )
     .expect("Expected translation generation to be OK");
 

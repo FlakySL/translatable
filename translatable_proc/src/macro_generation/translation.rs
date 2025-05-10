@@ -104,7 +104,7 @@ struct GenerationContext<'i> {
 ///
 /// **Returns**
 /// The token stream with the converted [`HashMap`].
-fn get_template_replacments_stream(replacements: &HashMap<Ident, TokenStream2>) -> TokenStream2 {
+fn format_replacements(replacements: &HashMap<Ident, TokenStream2>) -> TokenStream2 {
     map_transform_to_tokens(
         replacements,
         |key, value| quote! { (stringify!(#key).to_string(), #value.to_string()) }
@@ -197,8 +197,8 @@ fn all_static(ctx: &GenerationContext, language: Language, path: &TranslationPat
     );
 
     inline_quote! {{
-        #translation
-            .replace_with(&#{get_template_replacements_stream(ctx.template_replacements)})
+        #{translation}
+            .replace_with(&#{format_replacements(ctx.template_replacements)})
     }}
 }
 
@@ -217,14 +217,14 @@ fn path_static(
 
     inline_quote! {
         #{map_to_tokens(translation_object)}
-            .get(&#language)
-            .or_else(|| #fallback_translation)
+            .get(&#{language})
+            .or_else(|| #{fallback_translation})
             .ok_or_else(|| translatable::Error::LanguageNotAvailable(
-                #language,
-                #{path.static_display}.into()
+                #{language},
+                #{path.static_display()}.into()
             ))
             .map(|format_string| format_string
-                .replace_with(&#{get_template_replacements_stream(ctx.template_replacements)})
+                .replace_with(&#{format_replacements(ctx.template_replacements)})
             )
     }
 }
@@ -239,12 +239,15 @@ fn all_dynamic(
         (|| -> Result<std::string::String, translatable::Error> {
             // validation
             #[doc(hidden)]
-            let __lang: translatable::Language = #language;
+            let __lang: translatable::Language = #{language};
             #[doc(hidden)]
-            let __path: Vec<String> = #path
-                .iter()
-                .map(|x| x.to_string())
-                .collect();
+            let __path: Vec<String> = {
+                #[doc(hidden)]
+                fn __to_vec<I: IntoIterator<Item = S>, S: ToString>(items: I) -> Vec<String> {
+                    items.into_iter().map(|s| s.to_string()).collect()
+                }
+                __to_vec(#{path})
+            };
 
             // sources
             #[doc(hidden)]
@@ -256,7 +259,7 @@ fn all_dynamic(
 
             // alternative
             #[doc(hidden)]
-            let __fallback_translation = #{ctx.fallback_language}
+            let __fallback_translation = #{LiteralOption::from(ctx.fallback_language)}
                 .map(|fallback| __found_path
                     .get(&fallback)
                     .ok_or_else(|| translatable::Error::FallbackNotAvailable(fallback, __path.join("::")))
@@ -271,7 +274,7 @@ fn all_dynamic(
                 )
                 .ok_or_else(|| translatable::Error::LanguageNotAvailable(__lang, __path.join("::")))
                 .map(|format_string| format_string
-                    .replace_with(&#{get_template_replacements_stream(ctx.template_replacements)})
+                    .replace_with(&#{format_replacements(ctx.template_replacements)})
                 )
         })()
     }
