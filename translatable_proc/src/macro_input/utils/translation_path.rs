@@ -7,6 +7,8 @@
 //! This module doesn't have anything
 //! to do with [`std::path`].
 
+use std::ops::Deref;
+
 use proc_macro2::Span;
 use syn::parse::{Parse, ParseStream};
 use syn::spanned::Spanned;
@@ -35,53 +37,6 @@ pub struct TranslationPath {
     /// The path original span
     /// unless default, then empty.
     span: Span,
-}
-
-/// [`TranslationPath`] macro parsing implementation.
-///
-/// Used to parse arguments with [`parse2`] or [`parse_macro_input!`]
-/// within attribute arguments.
-///
-/// [`parse2`]: syn::parse2
-/// [`parse_macro_input!`]: syn::parse_macro_input
-impl Parse for TranslationPath {
-    fn parse(input: ParseStream) -> SynResult<Self> {
-        let path = input.parse::<Path>()?;
-
-        let span = path.span();
-        let segments = path
-            .segments
-            .into_iter()
-            .map(|segment| match segment.arguments {
-                PathArguments::None => Ok(segment
-                    .ident
-                    .to_string()),
-
-                error => Err(SynError::new_spanned(
-                    error,
-                    "A translation path can't contain generic arguments.",
-                )),
-            })
-            .collect::<Result<_, _>>()?;
-
-        Ok(Self { segments, span })
-    }
-}
-
-/// Default implementation for [`TranslationPath`].
-///
-/// Used to create empty translation paths usually
-/// for fallbacks with `Option::<TranslationPath>::unwrap_or_else()`.
-///
-/// The span generated for a [`TranslationPath::default`] call is
-/// [`Span::call_site`].
-impl Default for TranslationPath {
-    fn default() -> Self {
-        Self {
-            segments: Vec::new(),
-            span: Span::call_site(),
-        }
-    }
 }
 
 impl TranslationPath {
@@ -148,5 +103,65 @@ impl TranslationPath {
     pub fn span(&self) -> Span {
         // TODO: possibly implement Spanned
         self.span
+    }
+
+    pub fn static_display(&self) -> String {
+        self.segments()
+            .join("::")
+    }
+}
+
+/// [`TranslationPath`] macro parsing implementation.
+///
+/// Used to parse arguments with [`parse2`] or [`parse_macro_input!`]
+/// within attribute arguments.
+///
+/// [`parse2`]: syn::parse2
+/// [`parse_macro_input!`]: syn::parse_macro_input
+impl Parse for TranslationPath {
+    fn parse(input: ParseStream) -> SynResult<Self> {
+        let path = input.parse::<Path>()?;
+
+        let span = path.span();
+        let segments = path
+            .segments
+            .into_iter()
+            .map(|segment| match segment.arguments {
+                PathArguments::None => Ok(segment
+                    .ident
+                    .to_string()),
+
+                error => Err(SynError::new_spanned(
+                    error,
+                    "A translation path can't contain generic arguments.",
+                )),
+            })
+            .collect::<Result<_, _>>()?;
+
+        Ok(Self { segments, span })
+    }
+}
+
+/// Default implementation for [`TranslationPath`].
+///
+/// Used to create empty translation paths usually
+/// for fallbacks with `Option::<TranslationPath>::unwrap_or_else()`.
+///
+/// The span generated for a [`TranslationPath::default`] call is
+/// [`Span::call_site`].
+impl Default for TranslationPath {
+    fn default() -> Self {
+        Self {
+            segments: Vec::new(),
+            span: Span::call_site(),
+        }
+    }
+}
+
+impl Deref for TranslationPath {
+    type Target = Vec<String>;
+
+    fn deref(&self) -> &Self::Target {
+        self.segments()
     }
 }

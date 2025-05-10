@@ -154,7 +154,7 @@ pub struct MacroConfig {
     /// This will be used as default language if the overriden language
     /// is not available, will automatically unwrap outputs as they will
     /// be pre-handled by this.
-    fallback_language: Option<Language>
+    fallback_language: Option<Language>,
 }
 
 impl MacroConfig {
@@ -234,8 +234,7 @@ pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
         var(format!("TRANSLATABLE_{}", key.to_uppercase()))
             .ok()
             .or_else(|| {
-                toml
-                    .get(key)
+                toml.get(key)
                     .and_then(|v| v.as_str())
                     .map(|v| v.to_string())
             })
@@ -244,25 +243,22 @@ pub fn load_config() -> Result<&'static MacroConfig, ConfigError> {
     macro_rules! parsed_config_value {
         ($key:literal) => {
             config_value(&toml_content, $key)
-                .map(|s| s
-                    .parse()
-                    .map_err(|_| ConfigError::InvalidValue($key.into(), s))
-                )
+                .map(|s| {
+                    s.parse()
+                        .map_err(|_| ConfigError::InvalidValue($key.into(), s))
+                })
                 .transpose()
         };
     }
 
     let config = MacroConfig {
-        path: config_value(&toml_content, "locales_path")
-            .unwrap_or("./translations".into()),
+        path: config_value(&toml_content, "locales_path").unwrap_or("./translations".into()),
 
-        overlap: parsed_config_value!("overlap")?
-            .unwrap_or(TranslationOverlap::Ignore),
+        overlap: parsed_config_value!("overlap")?.unwrap_or(TranslationOverlap::Ignore),
 
-        seek_mode: parsed_config_value!("seek_mode")?
-            .unwrap_or(SeekMode::Alphabetical),
+        seek_mode: parsed_config_value!("seek_mode")?.unwrap_or(SeekMode::Alphabetical),
 
-        fallback_language: parsed_config_value!("fallback_language")?
+        fallback_language: parsed_config_value!("fallback_language")?,
     };
 
     Ok(TRANSLATABLE_CONFIG.get_or_init(|| config))
