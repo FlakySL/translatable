@@ -38,7 +38,12 @@ macro_rules! __inline_quote {
         let __inline_tmp = $e;
         $tokens.extend(quote::quote! { #__inline_tmp });
         $crate::__inline_quote!($tokens => $($rest)*);
-    }};	
+    }};
+
+    ( $tokens:ident => # $i:ident $($rest:tt)* ) => {{
+        $tokens.extend(quote::quote! { #$i });
+        $crate::__inline_quote!($tokens => $($rest)*);
+    }};
 
     ( $tokens:ident => { $($all:tt)* } $($rest:tt)* ) => {{
         let __inline_tmp = $crate::inline_quote!($($all)*);
