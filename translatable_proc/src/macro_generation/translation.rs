@@ -173,12 +173,12 @@ fn get_fallback_translation<'r>(
 /// Generates the macro output taking all static arguments.
 ///
 /// **Arguments**
-/// * `ctx` - The macro generation context
-/// * `language` - The static langauge argument
-/// * `path` - The static path argument
+/// * `ctx` - The macro generation context.
+/// * `language` - The static langauge argument.
+/// * `path` - The static path argument.
 ///
 /// **Returns**
-/// Tokens to be directly returned for all static generation
+/// Tokens to be directly returned for all static generation.
 #[inline(always)]
 fn all_static(ctx: &GenerationContext, language: Language, path: &TranslationPath) -> TokenStream2 {
     let translation_object = handle_macro_result!(get_translation_object(ctx.translations, path));
@@ -202,7 +202,20 @@ fn all_static(ctx: &GenerationContext, language: Language, path: &TranslationPat
     }}
 }
 
-/// Path static generation.
+/// Language dynamic path static generation.
+///
+/// Concern separation for [`translation_macro`].
+/// Generates the macro output taking a dynamic language
+/// argument as [`TokenStream2`] and a static path
+/// as [`TranslationPath`].
+///
+/// **Arguments**
+/// * `ctx` - The macro generation context.
+/// * `language` - The dynamic language argument.
+/// * `path` - The static path argument.
+///
+/// **Returns**
+/// Tokens to be directly returned for the macro generation.
 #[inline(always)]
 fn path_static(
     ctx: &GenerationContext,
@@ -229,6 +242,19 @@ fn path_static(
     }
 }
 
+/// All dynamic generation.
+///
+/// Concern separation for [`translation_macro`].
+/// Generates the macro output taking all the arguments
+/// as [`TokenStream2`] thus dynamic.
+///
+/// **Arguments**
+/// * `ctx` - The macro generation context.
+/// * `language` - The dynamic language argument.
+/// * `path` - The dynamic path argument.
+///
+/// **Returns**
+/// Tokens to be directly returned for the macro generation.
 #[inline(always)]
 fn all_dynamic(
     ctx: &GenerationContext,
