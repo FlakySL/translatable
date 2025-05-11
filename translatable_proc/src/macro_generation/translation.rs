@@ -197,7 +197,7 @@ fn all_static(ctx: &GenerationContext, language: Language, path: &TranslationPat
     );
 
     inline_quote! {{
-        #{translation}
+        #translation
             .replace_with(&#{format_replacements(ctx.template_replacements)})
     }}
 }
@@ -223,17 +223,16 @@ fn path_static(
     path: &TranslationPath,
 ) -> TokenStream2 {
     let translation_object = handle_macro_result!(get_translation_object(ctx.translations, path));
-    let fallback_translation: LiteralOption<_> = handle_macro_result!(
+    let fallback_translation = handle_macro_result!(
         get_fallback_translation(path, translation_object, ctx.fallback_language)
-    )
-        .into();
+    );
 
     inline_quote! {
         #{map_to_tokens(translation_object)}
-            .get(&#{language})
-            .or_else(|| #{fallback_translation})
+            .get(&#language)
+            .or_else(|| #{LiteralOption::from(fallback_translation)})
             .ok_or_else(|| translatable::Error::LanguageNotAvailable(
-                #{language},
+                #language,
                 #{path.static_display()}.into()
             ))
             .map(|format_string| format_string
@@ -265,14 +264,14 @@ fn all_dynamic(
         (|| -> Result<std::string::String, translatable::Error> {
             // validation
             #[doc(hidden)]
-            let __lang: translatable::Language = #{language};
+            let __lang: translatable::Language = #language;
             #[doc(hidden)]
             let __path: Vec<String> = {
                 #[doc(hidden)]
                 fn __to_vec<I: IntoIterator<Item = S>, S: ToString>(items: I) -> Vec<String> {
                     items.into_iter().map(|s| s.to_string()).collect()
                 }
-                __to_vec(#{path})
+                __to_vec(#path)
             };
 
             // sources
