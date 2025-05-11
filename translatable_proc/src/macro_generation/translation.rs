@@ -227,17 +227,27 @@ fn path_static(
         get_fallback_translation(path, translation_object, ctx.fallback_language)
     );
 
-    inline_quote! {
-        #{map_to_tokens(translation_object)}
-            .get(&#language)
-            .or_else(|| #{LiteralOption::from(fallback_translation)})
-            .ok_or_else(|| translatable::Error::LanguageNotAvailable(
-                #language,
-                #{path.static_display()}.into()
-            ))
-            .map(|format_string| format_string
+    match fallback_translation {
+        // If a fallback is available, return the raw object.
+        Some(fallback) => inline_quote! {
+            #{map_to_tokens(translation_object)}
+                .get(&#language)
+                .unwrap_or_else(|| #fallback)
                 .replace_with(&#{format_replacements(ctx.template_replacements)})
-            )
+        },
+
+        // If not, compute a Result.
+        None => inline_quote! {
+            #{map_to_tokens(translation_object)}
+                .get(&#language)
+                .ok_or_else(|| translatable::Error::LanguageNotAvailable(
+                    #language,
+                    #{path.static_display()}.into()
+                ))
+                .map(|format_string| format_string
+                    .replace_with(&#{format_replacements(ctx.template_replacements)})
+                )
+        },
     }
 }
 
