@@ -63,7 +63,7 @@ pub enum RuntimeError {
     #[error("The path '{0}' could not be found")]
     PathNotFound(String),
 
-    /// Dynamic language obtention error.
+    /// Language not available for translation error.
     ///
     /// This specifically happens when a language
     /// is not available for a specific translation.
@@ -76,9 +76,21 @@ pub enum RuntimeError {
     /// **Parameters**
     /// * `0` - The language that is not available.
     /// * `1` - The path for which the language is not available
-    /// appended with it's separator.
+    /// joined with it's separator.
     #[error("The language '{0:?}' ('{0:#}') is not available for the path '{1}'")]
     LanguageNotAvailable(Language, String),
+
+    /// Fallback not available for translation error.
+    ///
+    /// This specifically happens when a fallback
+    /// is specified but not available for a specific translation.
+    ///
+    /// **Parameters**
+    /// * `0` - The fallback that is not available.
+    /// * `1` - The path for which the language is not available
+    /// joined with it's separator.
+    #[error("The fallback language '{0:?}' ('#{0:#}') is not available for the path '{1}'")]
+    FallbackNotAvailable(Language, String),
 }
 
 impl RuntimeError {

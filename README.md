@@ -97,11 +97,11 @@ There are things you can configure on how translations are loaded from the folde
 you should make a `translatable.toml` in the root of the project, and abide by the following
 configuration values.
 
-| Key       | Value type                         | Description                                                                                                                    |
+| Key               | Value type                         | Description                                                                                                                    |
 |-----------|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
-| `path`      | `String`                             | Where the translation files will be stored, non translation files in that folder will cause errors.                            |
-| `seek_mode` | `"alphabetical"` \| `"unalphabetical"` | The found translations are ordered by file name, based on this field.                                                          |
-| `overlap`   | `"overwrite"` \| `"ignore"`            | Orderly if a translation is found `"overwrite"` will keep searching for translations and `"ignore"` will preserve the current one. |
+| `locales_path`      | `String`                             | Where the translation files will be stored, non translation files in that folder will cause errors.                            |
+| `seek_mode`         | `"alphabetical"` \| `"unalphabetical"` | The found translations are ordered by file name, based on this field.                                                          |
+| `overlap`           | `"overwrite"` \| `"ignore"`            | Orderly if a translation is found `"overwrite"` will keep searching for translations and `"ignore"` will preserve the current one. |
 
 `seek_mode` and `overlap` only reverse the translations as convenient, this way the process
 doesn't get repeated every time a translation is loaded.

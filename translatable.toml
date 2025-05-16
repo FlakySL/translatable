@@ -1,2 +1,2 @@
 
-path = "./translatable/tests/environments/everything_valid/translations/"
+locales_path = "./translatable/tests/environments/everything_valid/translations/"

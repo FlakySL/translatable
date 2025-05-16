@@ -10,9 +10,7 @@ struct Context {
 #[test]
 fn pass_fallback_catch() {
     let translations =
-        Context::load_translations(translatable::Language::AA, &HashMap::from([
-            ("user", "John")
-        ]));
+        Context::load_translations(translatable::Language::AA, &HashMap::from([("user", "John")]));
 
     assert_eq!(translations.formal, "Nice to meet you.");
     assert_eq!(translations.informal, "What's good John?");
