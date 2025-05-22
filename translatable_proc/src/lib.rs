@@ -11,7 +11,7 @@
 
 use macro_generation::context::context_macro;
 use macro_generation::translation::translation_macro;
-use macro_input::context::{ContextMacroArgs, ContextMacroStruct};
+use macro_input::context::ContextMacroInput;
 use macro_input::translation::TranslationMacroArgs;
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
@@ -32,8 +32,7 @@ mod macro_input;
 /// * `path` - A pat prefixed with `static` for static inference or a `Vec<impl
 ///   ToString>`
 /// for dynamic inference.
-/// * `replacements` - Arguments similar to python's `kwargs` for the
-///   translation replacements.
+/// * `replacements` - Translation template replacements as meta-variable-patterns.
 ///
 /// This macro provides optimizations depending on the dynamism
 /// of the parameters while calling the macro.
@@ -64,44 +63,10 @@ mod macro_input;
 /// * `Err(translatable::Error)` - If the invocation fails with a runtime error.
 #[proc_macro]
 pub fn translation(input: TokenStream) -> TokenStream {
-    translation_macro(parse_macro_input!(input as TranslationMacroArgs).into()).into()
+    translation_macro(parse_macro_input!(input as TranslationMacroArgs)).into()
 }
 
-/// # Translation context macro
-///
-/// This macro converts a struct into a translation context.
-///
-/// By definition that struct shouldn't be used for anything else,
-/// but nothing stops you from doing so.
-///
-/// This macro applies a rule to the struct. All fields must be
-/// a `String` or `&str`.
-///
-/// You can configure some parameters as a punctuated [`MetaNameValue`],
-/// these are
-/// - `base_path`: A path that gets prepended to all fields.
-/// - `fallback_language`: A language that must be available for all
-/// paths and changes the return type of the `load_translations` method.
-///
-/// All the fields on the struct now point to paths in your translation
-/// files, you can extend these paths applying the `#[path()]` attribute
-/// with a [`TranslationPath`]. Otherwise the path will be appended as
-/// the field identifier.
-///
-/// The field and struct visibility are kept as original.
-///
-/// This macro also generates a method called `load_translations` dynamically
-/// that loads all translations and returns an instance of the struct,
-/// optionally wrapped on a result depending on the `fallback_language`
-/// parameter value.
-///
-/// [`MetaNameValue`]: syn::MetaNameValue
-/// [`TranslationPath`]: macro_input::utils::translation_path::TranslationPath
-#[proc_macro_attribute]
-pub fn translation_context(attr: TokenStream, item: TokenStream) -> TokenStream {
-    context_macro(
-        parse_macro_input!(attr as ContextMacroArgs),
-        parse_macro_input!(item as ContextMacroStruct),
-    )
-    .into()
+#[proc_macro_derive(TranslationContext, attributes(base_path, path))]
+pub fn translation_context(input: TokenStream) -> TokenStream {
+    context_macro(parse_macro_input!(input as ContextMacroInput)).into()
 }

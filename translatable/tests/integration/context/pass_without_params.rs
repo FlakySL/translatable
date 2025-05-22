@@ -10,9 +10,7 @@ struct Context {
 }
 
 #[test]
-fn pass_without_params() {
-
-}
+fn pass_without_params() {}
 
 #[allow(unused)]
 fn main() {} // trybuild
