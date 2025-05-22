@@ -1,7 +1,8 @@
 #[allow(unused_imports)] // trybuild
-use ::{std::collections::HashMap, translatable::translation_context};
+use ::{std::collections::HashMap, translatable::TranslationContext};
 
-#[translation_context(base_path = greetings, fallback_language = "en")]
+#[derive(TranslationContext)]
+#[base_path(greetings)]
 struct Context {
     formal: String,
     informal: String,
